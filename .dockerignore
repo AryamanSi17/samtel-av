@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+Automation_AI/
+test_accuracy.py
+test_easyocr.py

@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Samtel Avionics — Invoice Processor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --radius: 10px; --radius-sm: 6px; --red: #cc1f1f; --red-dim: rgba(204,31,31,0.12); }
+
+    [data-theme="dark"] {
+      --bg:           #0a0a0a;
+      --surface:      #111111;
+      --surface2:     #181818;
+      --surface3:     #202020;
+      --border:       #272727;
+      --border-hover: #404040;
+      --text:         #f0f0f0;
+      --text-sub:     #999;
+      --text-muted:   #555;
+      --success:      #4ade80;
+      --success-bg:   rgba(74,222,128,0.1);
+      --error:        #f87171;
+      --error-bg:     rgba(248,113,113,0.1);
+      --j-key:        #c0c0c0;
+      --j-str:        #d4d4d4;
+      --j-num:        #e0e0e0;
+      --j-bool:       #b0b0b0;
+      --j-null:       #555;
+      --dot:          rgba(255,255,255,0.03);
+      --shadow:       0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    [data-theme="light"] {
+      --bg:           #f2f2f2;
+      --surface:      #ffffff;
+      --surface2:     #f7f7f7;
+      --surface3:     #ececec;
+      --border:       #e0e0e0;
+      --border-hover: #bbb;
+      --text:         #111111;
+      --text-sub:     #666;
+      --text-muted:   #aaa;
+      --success:      #16a34a;
+      --success-bg:   rgba(22,163,74,0.08);
+      --error:        #dc2626;
+      --error-bg:     rgba(220,38,38,0.08);
+      --j-key:        #333;
+      --j-str:        #444;
+      --j-num:        #222;
+      --j-bool:       #555;
+      --j-null:       #bbb;
+      --dot:          rgba(0,0,0,0.04);
+      --shadow:       0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    html, body {
+      overflow-x: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
+      background-size: 28px 28px;
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.25s, color 0.25s;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+.header-title { flex: 1; }
+    .header-title h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: 0.2px;
+    }
+    .header-title p {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 300;
+      margin-top: 2px;
+      letter-spacing: 0.2px;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .model-badge {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background: var(--surface2);
+      display: none;
+    }
+    @media (min-width: 600px) { .model-badge { display: inline-block; } }
+
+    #theme-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    #theme-btn:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 24px;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+      min-width: 0;
+      padding: 28px 32px;
+      align-items: start;
+    }
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+      header { padding: 12px 16px; }
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .panel-num {
+      width: 22px; height: 22px;
+      border-radius: 5px;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .panel-title { font-size: 13px; font-weight: 600; color: var(--text); }
+
+    /* ── Drop zone ── */
+    #drop-zone {
+      border: 1.5px dashed var(--border-hover);
+      border-radius: var(--radius);
+      padding: 36px 20px 28px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      background: var(--surface2);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--red);
+      background: var(--surface3);
+    }
+    #drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+
+    .drop-icon-wrap {
+      width: 60px; height: 60px;
+      border-radius: 14px;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    #drop-zone:hover .drop-icon-wrap,
+    #drop-zone.drag-over .drop-icon-wrap {
+      border-color: var(--red);
+      background: var(--red-dim);
+    }
+    .drop-icon-wrap svg { width: 26px; height: 26px; stroke: var(--text-sub); transition: stroke 0.2s; }
+    #drop-zone:hover .drop-icon-wrap svg,
+    #drop-zone.drag-over .drop-icon-wrap svg { stroke: var(--red); }
+
+    .drop-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+    .drop-sub   { font-size: 11px; color: var(--text-muted); font-weight: 300; }
+    .drop-types { display: flex; justify-content: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+    .type-chip  {
+      font-size: 10px; font-weight: 500;
+      padding: 2px 8px; border-radius: 4px;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-sub);
+    }
+
+    /* File info */
+    #file-info {
+      display: none; margin-top: 12px; padding: 10px 14px;
+      border: 1px solid var(--border); background: var(--surface2);
+      border-radius: var(--radius-sm); gap: 10px; align-items: center;
+    }
+    #file-info.visible { display: flex; }
+    .file-icon-sm {
+      width: 30px; height: 30px; border-radius: 7px;
+      background: var(--red-dim); border: 1px solid var(--red);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .file-icon-sm svg { width: 14px; height: 14px; stroke: var(--red); }
+    .file-meta { flex: 1; min-width: 0; }
+    .file-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-size { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+    /* Process button */
+    #process-btn {
+      margin-top: 16px; width: 100%;
+      background: var(--red);
+      color: #fff;
+      border: none; padding: 13px;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      letter-spacing: 0.3px;
+      border-radius: var(--radius-sm);
+      cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    #process-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    #process-btn:disabled { background: var(--surface3); color: var(--text-muted); cursor: not-allowed; transform: none; }
+    #process-btn svg { width: 15px; height: 15px; }
+
+    /* Status */
+    #status {
+      margin-top: 12px; font-size: 12px; min-height: 18px;
+      color: var(--text-muted); display: flex; align-items: center; gap: 7px;
+      border-radius: var(--radius-sm); padding: 0 2px;
+    }
+    #status.error   { color: var(--error); background: var(--error-bg); padding: 8px 12px; }
+    #status.success { color: var(--success); }
+
+    .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid var(--border); border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results panel ── */
+    #results-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 300px; gap: 14px;
+    }
+    .empty-illustration {
+      width: 72px; height: 72px; border-radius: 16px;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .empty-illustration svg { width: 32px; height: 32px; stroke: var(--text-muted); opacity: 0.4; }
+    .empty-text { font-size: 13px; font-weight: 500; color: var(--text-sub); }
+    .empty-sub  { font-size: 11px; color: var(--text-muted); font-weight: 300; }
+
+    #results-grid { display: none; gap: 14px; flex-direction: column; }
+    #results-grid.visible { display: flex; }
+
+    /* Invoice type badge */
+    #invoice-type-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+    .type-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .type-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 3px 12px; border-radius: 20px;
+      background: var(--red-dim);
+      border: 1px solid var(--red);
+      color: var(--red);
+      letter-spacing: 0.3px;
+    }
+
+    /* JSON toolbar */
+    .json-toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .json-label {
+      font-size: 11px; font-weight: 600; color: var(--text-sub); flex: 1;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .json-label svg { width: 13px; height: 13px; stroke: var(--text-muted); }
+
+    #proc-time {
+      font-size: 10.5px; color: var(--text-muted);
+      background: var(--surface2); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap; display: none; align-items: center; gap: 5px;
+    }
+    #proc-time svg { width: 11px; height: 11px; stroke: var(--text-muted); }
+
+    #copy-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-sub); font-family: inherit; font-size: 11px; font-weight: 500;
+      padding: 5px 14px; border-radius: 20px; cursor: pointer;
+      transition: all 0.2s; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    #copy-btn svg { width: 12px; height: 12px; }
+    #copy-btn:hover  { border-color: var(--border-hover); color: var(--text); }
+    #copy-btn.copied { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+
+    /* JSON block */
+    #json-output {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 18px 20px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13.5px; line-height: 1.85;
+      overflow-x: auto; overflow-y: auto;
+      max-height: 55vh; white-space: pre;
+    }
+    .j-key  { color: var(--j-key); font-weight: 500; }
+    .j-str  { color: var(--j-str); }
+    .j-num  { color: var(--j-num); }
+    .j-bool { color: var(--j-bool); }
+    .j-null { color: var(--j-null); font-style: italic; }
+
+    /* Raw text */
+    .raw-toggle {
+      font-size: 11.5px; color: var(--text-muted); cursor: pointer;
+      display: flex; gap: 6px; align-items: center; user-select: none;
+      padding: 2px 0; transition: color 0.15s;
+    }
+    .raw-toggle:hover { color: var(--text-sub); }
+    .raw-toggle svg { width: 12px; height: 12px; stroke: currentColor; transition: transform 0.2s; }
+    .raw-toggle.open svg { transform: rotate(90deg); }
+
+    #raw-text-box {
+      display: none; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px;
+      font-size: 11px; line-height: 1.65; color: var(--text-muted);
+      white-space: pre-wrap; max-height: 160px; overflow-y: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border); padding: 13px 32px;
+      font-size: 10.5px; font-weight: 300; color: var(--text-muted);
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: var(--surface);
+    }
+    .footer-right { display: flex; align-items: center; gap: 6px; }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    @media (max-width: 920px) {
+      footer { padding: 12px 16px; flex-direction: column; gap: 4px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>Samtel Avionics</h1>
+    <p>Invoice Processing Software</p>
+  </div>
+  <div class="header-right">
+    <button id="theme-btn" onclick="toggleTheme()">
+      <span id="theme-icon"></span>
+      <span id="theme-label">Light</span>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Upload Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-num">1</div>
+      <span class="panel-title">Upload Invoice</span>
+    </div>
+
+    <div id="drop-zone">
+      <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp" />
+      <div class="drop-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 16 12 12 8 16"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+        </svg>
+      </div>
+      <div class="drop-title">Drop your invoice here</div>
+      <div class="drop-sub">or click to browse files</div>
+      <div class="drop-types">
+        <span class="type-chip">PDF</span>
+        <span class="type-chip">PNG</span>
+        <span class="type-chip">JPG</span>
+        <span class="type-chip">TIFF</span>
+      </div>
+    </div>
+
+    <div id="file-info">
+      <div class="file-icon-sm">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="file-meta">
+        <div class="file-name" id="fn"></div>
+        <div class="file-size" id="fs"></div>
+      </div>
+    </div>
+
+    <button id="process-btn" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Process Invoice
+    </button>
+
+    <div id="status"></div>
+  </div>
+
+  <!-- Results Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-num">2</div>
+      <span class="panel-title">Extracted Data</span>
+    </div>
+
+    <div id="results-empty">
+      <div class="empty-illustration">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </div>
+      <div class="empty-text">No invoice processed yet</div>
+      <div class="empty-sub">Upload a file on the left to get started</div>
+    </div>
+
+    <div id="results-grid">
+
+      <!-- Detected type row -->
+      <div id="invoice-type-row">
+        <span class="type-label">Detected type</span>
+        <span class="type-badge" id="invoice-type-badge">—</span>
+      </div>
+
+      <!-- JSON toolbar -->
+      <div class="json-toolbar">
+        <span class="json-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          JSON Output
+        </span>
+        <span id="proc-time">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </span>
+        <button id="copy-btn" onclick="copyJson()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy
+        </button>
+      </div>
+
+      <div id="json-output"></div>
+
+      <div class="raw-toggle" id="raw-toggle-btn" onclick="toggleRaw()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+        Raw extracted text
+      </div>
+      <div id="raw-text-box"></div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>© 2026 Samtel Avionics — Invoice Processing Software</span>
+  <div class="footer-right">
+    <div class="live-dot"></div>
+    <span>Developed by VANCO AI
+    </span>
+  </div>
+</footer>
+
+<script>
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  const sunSVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+  const moonSVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
+  document.getElementById('theme-icon').innerHTML = sunSVG;
+
+  function toggleTheme() {
+    const html  = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-icon').innerHTML  = isDark ? moonSVG : sunSVG;
+    document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
+  }
+
+  // ── Invoice type labels ────────────────────────────────────────────────────
+  const TYPE_LABELS = {
+    PURCHASE_DOMESTIC:      'Purchase — Domestic',
+    IMPORT:                 'Import',
+    SALE_DOMESTIC:          'Sale — Domestic',
+    SALE_EXPORT:            'Sale — Export',
+    SERVICES:               'Services / Job Work',
+    EMPLOYEE_REIMBURSEMENT: 'Employee Reimbursement',
+  };
+
+  // ── File handling ──────────────────────────────────────────────────────────
+  const dropZone   = document.getElementById('drop-zone');
+  const fileInput  = document.getElementById('file-input');
+  const fileInfo   = document.getElementById('file-info');
+  const fnEl       = document.getElementById('fn');
+  const fsEl       = document.getElementById('fs');
+  const processBtn = document.getElementById('process-btn');
+  const statusEl   = document.getElementById('status');
+  const resultsEmpty = document.getElementById('results-empty');
+  const resultsGrid  = document.getElementById('results-grid');
+
+  let selectedFile = null;
+
+  function formatBytes(b) {
+    if (b < 1024)    return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+  }
+
+  function setFile(file) {
+    selectedFile = file;
+    fnEl.textContent = file.name;
+    fsEl.textContent = formatBytes(file.size);
+    fileInfo.classList.add('visible');
+    processBtn.disabled = false;
+    setStatus('');
+  }
+
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) { setFile(f); fileInput.files = e.dataTransfer.files; }
+  });
+
+  function setStatus(msg, type = '') {
+    statusEl.innerHTML = msg;
+    statusEl.className = type;
+  }
+
+  function setLoading(on) {
+    processBtn.disabled = on;
+    if (on) {
+      statusEl.innerHTML = '<span class="spinner"></span> Classifying & extracting…';
+      statusEl.className = '';
+    }
+  }
+
+  // ── JSON rendering ─────────────────────────────────────────────────────────
+  let _lastJson = null;
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function syntaxHighlight(json) {
+    return JSON.stringify(json, null, 2).replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      m => {
+        if (/^"/.test(m)) {
+          if (/:$/.test(m)) return `<span class="j-key">${escapeHtml(m)}</span>`;
+          return `<span class="j-str">${escapeHtml(m)}</span>`;
+        }
+        if (/true|false/.test(m)) return `<span class="j-bool">${m}</span>`;
+        if (/null/.test(m))       return `<span class="j-null">${m}</span>`;
+        return `<span class="j-num">${m}</span>`;
+      }
+    );
+  }
+
+  function renderResults(data, rawPreview, elapsed) {
+    const d    = data.invoice_data || {};
+    const type = data.invoice_type || '';
+    _lastJson = d;
+
+    document.getElementById('invoice-type-badge').textContent = TYPE_LABELS[type] || type;
+    document.getElementById('json-output').innerHTML    = syntaxHighlight(d);
+    document.getElementById('raw-text-box').textContent = rawPreview;
+
+    const pt = document.getElementById('proc-time');
+    pt.style.display = 'flex';
+    pt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${elapsed}s`;
+
+    resultsGrid.classList.add('visible');
+    resultsEmpty.style.display = 'none';
+  }
+
+  function copyJson() {
+    if (!_lastJson) return;
+    navigator.clipboard.writeText(JSON.stringify(_lastJson, null, 2)).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+        btn.classList.remove('copied');
+      }, 1800);
+    });
+  }
+
+  function toggleRaw() {
+    const box = document.getElementById('raw-text-box');
+    const btn = document.getElementById('raw-toggle-btn');
+    const open = box.style.display === 'block';
+    box.style.display = open ? 'none' : 'block';
+    btn.classList.toggle('open', !open);
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  processBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    setLoading(true);
+    resultsGrid.classList.remove('visible');
+    resultsEmpty.style.display = 'flex';
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+    const t0 = Date.now();
+
+    try {
+      const res     = await fetch('/api/process-invoice', { method: 'POST', body: form });
+      const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
+      const json    = await res.json();
+
+      if (!res.ok) { setStatus(json.detail || 'An error occurred.', 'error'); return; }
+
+      setStatus(
+        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Extraction complete`,
+        'success'
+      );
+      renderResults(json, json.raw_text_preview || '', elapsed);
+    } catch (err) {
+      setStatus(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+</body>
+</html>
