@@ -1,16 +1,22 @@
 import os
 import io
 import json
+import sqlite3
+import asyncio
 from pathlib import Path
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from dotenv import load_dotenv
 import pdfplumber
 import fitz  # PyMuPDF
 from PIL import Image
 from groq import Groq
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
 
 try:
     import pytesseract
@@ -37,6 +43,88 @@ ALLOWED_TYPES = {
     "image/bmp",
     "image/webp",
 }
+
+_executor = ThreadPoolExecutor(max_workers=4)
+
+# ── Database ───────────────────────────────────────────────────────────────────
+
+DB_PATH = Path(__file__).parent / "invoices.db"
+
+
+def get_db_connection():
+    con = sqlite3.connect(DB_PATH, timeout=30.0)
+    # Enable Write-Ahead Logging (WAL) to allow concurrent reads and prevent locks
+    con.execute("PRAGMA journal_mode=WAL;")
+    return con
+
+
+def _init_db():
+    con = get_db_connection()
+    con.execute("""CREATE TABLE IF NOT EXISTS invoices (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        processed_at   TEXT NOT NULL,
+        filename       TEXT,
+        invoice_type   TEXT,
+        invoice_number TEXT,
+        invoice_date   TEXT,
+        party_name     TEXT,
+        total_amount   TEXT,
+        data_json      TEXT,
+        duplicate_of   INTEGER
+    )""")
+    con.commit()
+    con.close()
+
+
+_init_db()
+
+
+def _extract_summary(invoice_type: str, data: dict) -> tuple:
+    num   = str(data.get("invoice_number") or "")
+    date  = str(data.get("invoice_date") or "")
+    party = str(
+        data.get("vendor_name") or data.get("service_provider_name") or
+        data.get("courier_company") or data.get("seller_name") or
+        data.get("employee_name") or ""
+    )
+    total = str(
+        data.get("grand_total") or data.get("total_inr") or
+        data.get("gross_total") or data.get("total_amount") or
+        data.get("net_payable_to_employee") or ""
+    )
+    return num, date, party, total
+
+
+def _check_duplicate(invoice_number: str, invoice_type: str):
+    if not invoice_number or invoice_number in ("None", ""):
+        return None
+    con = get_db_connection()
+    row = con.execute(
+        "SELECT id, filename FROM invoices WHERE invoice_number=? AND invoice_type=? "
+        "AND duplicate_of IS NULL ORDER BY processed_at DESC LIMIT 1",
+        (invoice_number, invoice_type),
+    ).fetchone()
+    con.close()
+    return row
+
+
+def _save_invoice(filename, invoice_type, data, duplicate_of=None) -> int:
+    num, date, party, total = _extract_summary(invoice_type, data)
+    con = get_db_connection()
+    cur = con.execute(
+        "INSERT INTO invoices (processed_at,filename,invoice_type,invoice_number,"
+        "invoice_date,party_name,total_amount,data_json,duplicate_of) VALUES (?,?,?,?,?,?,?,?,?)",
+        (
+            datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
+            filename, invoice_type, num, date, party, total,
+            json.dumps(data), duplicate_of,
+        ),
+    )
+    row_id = cur.lastrowid
+    con.commit()
+    con.close()
+    return row_id
+
 
 # ── Invoice type classifier ────────────────────────────────────────────────────
 
@@ -317,7 +405,6 @@ Invoice text:
 # ── Text extraction ────────────────────────────────────────────────────────────
 
 def _ocr_pdf_with_pymupdf(file_bytes: bytes, dpi: int = 300) -> str:
-    """Render each page with PyMuPDF and OCR with Tesseract."""
     if not TESSERACT_AVAILABLE:
         raise HTTPException(
             status_code=501,
@@ -325,7 +412,7 @@ def _ocr_pdf_with_pymupdf(file_bytes: bytes, dpi: int = 300) -> str:
         )
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     parts = []
-    mat = fitz.Matrix(dpi / 72, dpi / 72)  # 72 dpi is PyMuPDF default
+    mat = fitz.Matrix(dpi / 72, dpi / 72)
     for page in doc:
         pix = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY)
         img = Image.frombytes("L", (pix.width, pix.height), pix.samples)
@@ -335,18 +422,14 @@ def _ocr_pdf_with_pymupdf(file_bytes: bytes, dpi: int = 300) -> str:
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    # 1. Try native text extraction via pdfplumber (digital PDFs — lossless)
     text_parts = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
             text = page.extract_text()
             if text:
                 text_parts.append(text)
-
     if text_parts:
         return "\n\n".join(text_parts)
-
-    # 2. Scanned PDF — render with PyMuPDF then OCR
     return _ocr_pdf_with_pymupdf(file_bytes, dpi=300)
 
 
@@ -383,70 +466,88 @@ def _parse_json(content: str) -> dict:
 
 
 def _keyword_classify(text: str) -> str | None:
-    """Fast keyword pre-classifier — returns a type if unambiguous, else None."""
     import re
     t = text.upper()
 
-    # 1. Services / job-work (check early — strong unambiguous signals)
     if "JOB WORK INVOICE" in t or "JOB WORK" in t:
         return "SERVICES"
     if "GOVERNMENT E-MARKETPLACE" in t or "GOVERNMENT EMARKETPLACE" in t:
         return "SERVICES"
     if "GEM-20" in t and ("TRANSACTION CHARGES" in t or "MILESTONE" in t):
         return "SERVICES"
-    if re.search(r'\b998[0-9]\d\d\b', t):  # SAC codes 998xxx = services
+    if re.search(r'\b998[0-9]\d\d\b', t):
         return "SERVICES"
 
-    # 2. Employee reimbursement
     if "REIMBURSEMENT" in t and ("EMPLOYEE" in t or "SAP NO" in t or "DEPARTMENT" in t):
         return "EMPLOYEE_REIMBURSEMENT"
 
-    # 3. Import — courier + foreign shipment (IEC code is a very strong signal)
     if re.search(r'IEC\s*(NO|CODE|NUMBER)?[\s:]*\d', t):
         return "IMPORT"
     if ("UPS EXPRESS" in t or "DHL EXPRESS" in t or "FEDEX" in t) and ("DUTY" in t or "USD" in t):
         return "IMPORT"
 
-    # 4. Determine if Samtel is the ISSUER (top ~400 chars) or the BUYER
-    # Strip everything from the first address-block label onward so we only see the issuer header
     address_cut = re.search(r'\b(SHIP\s*TO|BILL\s*TO|CONSIGNEE|BUYER|BILLED\s*TO|RECEIVER)\b', t)
     header_zone = t[:address_cut.start()] if address_cut else t[:400]
     samtel_is_issuer = "SAMTEL AVIONICS" in header_zone or "SAMTEL HAL DISPLAY" in header_zone
 
     if samtel_is_issuer:
-        # 5. Export: buyer has no GSTIN (foreign entity)
-        # Look for the buyer/bill-to GSTIN block — if it's blank after the buyer address, it's export
         buyer_block = re.search(r'(BUYER|BILL\s*TO).{0,600}GSTIN[/\s]*UIN\s*:\s*(\S*)', t, re.DOTALL)
         if buyer_block:
             gstin_val = buyer_block.group(2).strip()
-            # Foreign buyers have empty or absent GSTIN
             if not gstin_val or len(gstin_val) < 10:
                 return "SALE_EXPORT"
         return "SALE_DOMESTIC"
 
-    # 6. If Samtel is NOT the issuer → purchase or services (let LLM handle ambiguous cases)
     return None
 
 
 def classify_invoice(raw_text: str) -> str:
-    # Try fast keyword match first
     fast = _keyword_classify(raw_text)
     if fast:
         return fast
-
-    # Fall back to LLM
     result = _llm(CLASSIFY_PROMPT.format(invoice_text=raw_text[:4000]), max_tokens=16)
     valid = {"PURCHASE_DOMESTIC", "IMPORT", "SALE_DOMESTIC", "SALE_EXPORT", "SERVICES", "EMPLOYEE_REIMBURSEMENT"}
     for v in valid:
         if v in result.upper():
             return v
-    return "PURCHASE_DOMESTIC"  # safe fallback
+    return "PURCHASE_DOMESTIC"
 
 
 def extract_invoice_data(invoice_type: str, raw_text: str) -> dict:
     prompt = PROMPTS[invoice_type].format(invoice_text=raw_text)
     content = _llm(prompt, max_tokens=3000)
     return _parse_json(content)
+
+
+# ── Core processing helper ─────────────────────────────────────────────────────
+
+def _process_file_sync(file_bytes: bytes, filename: str, content_type: str) -> dict:
+    if content_type == "application/pdf":
+        raw_text = extract_text_from_pdf(file_bytes)
+    else:
+        raw_text = extract_text_from_image(file_bytes)
+
+    if not raw_text or len(raw_text.strip()) < 20:
+        raise ValueError("Could not extract readable text. Ensure the file is not a low-resolution scan.")
+
+    invoice_type  = classify_invoice(raw_text)
+    invoice_data  = extract_invoice_data(invoice_type, raw_text)
+
+    inv_num = invoice_data.get("invoice_number")
+    dup     = _check_duplicate(str(inv_num or ""), invoice_type)
+    dup_warning = f"Possible duplicate of '{dup[1]}' (ID #{dup[0]})" if dup else None
+
+    row_id = _save_invoice(filename, invoice_type, invoice_data, dup[0] if dup else None)
+
+    return {
+        "status":            "success",
+        "id":                row_id,
+        "filename":          filename,
+        "invoice_type":      invoice_type,
+        "invoice_data":      invoice_data,
+        "duplicate_warning": dup_warning,
+        "raw_text_preview":  raw_text[:500] + ("..." if len(raw_text) > 500 else ""),
+    }
 
 
 # ── API ────────────────────────────────────────────────────────────────────────
@@ -458,33 +559,246 @@ async def process_invoice(file: UploadFile = File(...)):
             status_code=400,
             detail=f"Unsupported file type: {file.content_type}. Upload a PDF or image file.",
         )
-
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    try:
+        return _process_file_sync(file_bytes, file.filename, file.content_type)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
-    if file.content_type == "application/pdf":
-        raw_text = extract_text_from_pdf(file_bytes)
-    else:
-        raw_text = extract_text_from_image(file_bytes)
 
-    if not raw_text or len(raw_text.strip()) < 20:
-        raise HTTPException(
-            status_code=422,
-            detail="Could not extract readable text. Ensure the file is not a low-resolution scan.",
-        )
+@app.post("/api/process-batch")
+async def process_batch(files: list[UploadFile] = File(...)):
+    if len(files) > 20:
+        raise HTTPException(400, "Maximum 20 files per batch.")
 
-    invoice_type = classify_invoice(raw_text)
-    invoice_data = extract_invoice_data(invoice_type, raw_text)
+    sem  = asyncio.Semaphore(3)
+    loop = asyncio.get_event_loop()
 
+    async def _one(fb, fname, ctype):
+        async with sem:
+            try:
+                return await loop.run_in_executor(
+                    _executor, _process_file_sync, fb, fname, ctype
+                )
+            except Exception as e:
+                return {"status": "error", "filename": fname, "error": str(e)}
+
+    items = []
+    for f in files:
+        if f.content_type not in ALLOWED_TYPES:
+            items.append({"error": f"Unsupported: {f.content_type}", "bytes": None,
+                          "name": f.filename, "ctype": f.content_type})
+        else:
+            fb = await f.read()
+            items.append({"bytes": fb, "name": f.filename, "ctype": f.content_type, "error": None})
+
+    tasks = [
+        (_one(it["bytes"], it["name"], it["ctype"]) if not it["error"]
+         else asyncio.coroutine(lambda it=it: {"status": "error", "filename": it["name"], "error": it["error"]})())
+        for it in items
+    ]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    return [
+        r if not isinstance(r, Exception)
+        else {"status": "error", "filename": items[i]["name"], "error": str(r)}
+        for i, r in enumerate(results)
+    ]
+
+
+# ── History ────────────────────────────────────────────────────────────────────
+
+@app.get("/api/history")
+async def get_history():
+    con = get_db_connection()
+    rows = con.execute(
+        "SELECT id,processed_at,filename,invoice_type,invoice_number,"
+        "invoice_date,party_name,total_amount,duplicate_of FROM invoices "
+        "ORDER BY processed_at DESC LIMIT 500"
+    ).fetchall()
+    con.close()
+    keys = ["id","processed_at","filename","invoice_type","invoice_number",
+            "invoice_date","party_name","total_amount","duplicate_of"]
+    return [dict(zip(keys, r)) for r in rows]
+
+
+@app.get("/api/history/{invoice_id}")
+async def get_invoice(invoice_id: int):
+    con = get_db_connection()
+    row = con.execute("SELECT * FROM invoices WHERE id=?", (invoice_id,)).fetchone()
+    con.close()
+    if not row:
+        raise HTTPException(404, "Invoice not found")
+    keys = ["id","processed_at","filename","invoice_type","invoice_number",
+            "invoice_date","party_name","total_amount","data_json","duplicate_of"]
+    d = dict(zip(keys, row))
+    d["invoice_data"] = json.loads(d.pop("data_json"))
+    return d
+
+
+@app.delete("/api/history")
+async def clear_history():
+    con = get_db_connection()
+    con.execute("DELETE FROM invoices")
+    con.commit()
+    con.close()
+    return {"status": "cleared"}
+
+
+# ── Analytics ──────────────────────────────────────────────────────────────────
+
+@app.get("/api/analytics")
+async def get_analytics():
+    con = get_db_connection()
+    total  = con.execute("SELECT COUNT(*) FROM invoices").fetchone()[0]
+    dups   = con.execute("SELECT COUNT(*) FROM invoices WHERE duplicate_of IS NOT NULL").fetchone()[0]
+    by_type = con.execute(
+        "SELECT invoice_type, COUNT(*) FROM invoices GROUP BY invoice_type"
+    ).fetchall()
+    top_vendors = con.execute(
+        "SELECT party_name, COUNT(*) FROM invoices WHERE party_name!='' "
+        "GROUP BY party_name ORDER BY COUNT(*) DESC LIMIT 10"
+    ).fetchall()
+    daily = con.execute(
+        "SELECT DATE(processed_at) as d, COUNT(*) FROM invoices "
+        "GROUP BY d ORDER BY d ASC LIMIT 30"
+    ).fetchall()
+    con.close()
     return {
-        "status": "success",
-        "filename": file.filename,
-        "invoice_type": invoice_type,
-        "raw_text_preview": raw_text[:500] + ("..." if len(raw_text) > 500 else ""),
-        "invoice_data": invoice_data,
+        "total_count":     total,
+        "duplicate_count": dups,
+        "by_type":    [{"type": r[0], "count": r[1]} for r in by_type],
+        "top_vendors":[{"name": r[0], "count": r[1]} for r in top_vendors],
+        "daily":      [{"date": r[0], "count": r[1]} for r in daily],
     }
 
+
+# ── Excel export ───────────────────────────────────────────────────────────────
+
+@app.get("/api/export/excel")
+async def export_history_excel():
+    con = get_db_connection()
+    rows = con.execute(
+        "SELECT id,processed_at,filename,invoice_type,invoice_number,"
+        "invoice_date,party_name,total_amount,duplicate_of FROM invoices ORDER BY processed_at DESC"
+    ).fetchall()
+    con.close()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Invoice History"
+
+    headers = ["ID","Processed At","Filename","Invoice Type","Invoice Number",
+               "Invoice Date","Vendor / Party","Total Amount","Duplicate Of"]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="CC1F1F")
+        cell.alignment = Alignment(horizontal="center")
+
+    for row in rows:
+        ws.append(list(row))
+
+    for col in ws.columns:
+        ws.column_dimensions[col[0].column_letter].width = min(
+            max(len(str(c.value or "")) for c in col) + 4, 50
+        )
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=samtel_invoices.xlsx"},
+    )
+
+
+@app.get("/api/history/{invoice_id}/excel")
+async def export_invoice_excel(invoice_id: int):
+    con = get_db_connection()
+    row = con.execute("SELECT * FROM invoices WHERE id=?", (invoice_id,)).fetchone()
+    con.close()
+    if not row:
+        raise HTTPException(404, "Invoice not found")
+
+    # row: id,processed_at,filename,invoice_type,invoice_number,invoice_date,party_name,total_amount,data_json,duplicate_of
+    filename     = row[2]
+    invoice_type = row[3]
+    data         = json.loads(row[8])
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Invoice"
+
+    # Title row
+    ws.merge_cells("A1:B1")
+    ws["A1"] = f"Samtel Avionics — {invoice_type.replace('_', ' ').title()}"
+    ws["A1"].font  = Font(bold=True, size=14, color="FFFFFF")
+    ws["A1"].fill  = PatternFill("solid", fgColor="CC1F1F")
+    ws["A1"].alignment = Alignment(horizontal="center")
+
+    ws.merge_cells("A2:B2")
+    ws["A2"] = f"File: {filename}  |  Processed: {row[1][:10]}"
+    ws["A2"].font = Font(italic=True, color="888888", size=9)
+    ws["A2"].alignment = Alignment(horizontal="center")
+
+    ws.append([])
+    r = 4
+    line_items = None
+
+    for k, v in data.items():
+        if k == "line_items" and isinstance(v, list):
+            line_items = v
+            continue
+        if v is None:
+            continue
+        if isinstance(v, dict):
+            ws.cell(r, 1, k.replace("_", " ").title())
+            ws.cell(r, 1).font = Font(bold=True, color="CC1F1F")
+            ws.merge_cells(f"A{r}:B{r}")
+            r += 1
+            for sk, sv in v.items():
+                if sv is not None:
+                    ws.cell(r, 1, "  " + sk.replace("_", " ").title()).font = Font(color="555555")
+                    ws.cell(r, 2, str(sv))
+                    r += 1
+        else:
+            ws.cell(r, 1, k.replace("_", " ").title()).font = Font(bold=True)
+            ws.cell(r, 2, str(v))
+            r += 1
+
+    if line_items:
+        r += 1
+        ws.cell(r, 1, "Line Items").font = Font(bold=True, size=12, color="CC1F1F")
+        r += 1
+        if line_items:
+            hdrs = list(line_items[0].keys())
+            for j, h in enumerate(hdrs, 1):
+                c = ws.cell(r, j, h.replace("_", " ").title())
+                c.font = Font(bold=True, color="FFFFFF")
+                c.fill = PatternFill("solid", fgColor="222222")
+            r += 1
+            for item in line_items:
+                for j, h in enumerate(hdrs, 1):
+                    ws.cell(r, j, str(item.get(h, "") or ""))
+                r += 1
+
+    ws.column_dimensions["A"].width = 32
+    ws.column_dimensions["B"].width = 45
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    safe = filename.replace(" ", "_").replace("/", "_")
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={safe}.xlsx"},
+    )
+# ── Static / Frontend ──────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():

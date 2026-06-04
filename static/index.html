@@ -5,60 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Samtel Avionics — Invoice Processor</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root { --radius: 10px; --radius-sm: 6px; --red: #cc1f1f; --red-dim: rgba(204,31,31,0.12); }
 
     [data-theme="dark"] {
-      --bg:           #0a0a0a;
-      --surface:      #111111;
-      --surface2:     #181818;
-      --surface3:     #202020;
-      --border:       #272727;
-      --border-hover: #404040;
-      --text:         #f0f0f0;
-      --text-sub:     #999;
-      --text-muted:   #555;
-      --success:      #4ade80;
-      --success-bg:   rgba(74,222,128,0.1);
-      --error:        #f87171;
-      --error-bg:     rgba(248,113,113,0.1);
-      --j-key:        #c0c0c0;
-      --j-str:        #d4d4d4;
-      --j-num:        #e0e0e0;
-      --j-bool:       #b0b0b0;
-      --j-null:       #555;
-      --dot:          rgba(255,255,255,0.03);
-      --shadow:       0 4px 20px rgba(0,0,0,0.6);
+      --bg: #0a0a0a; --surface: #111; --surface2: #181818; --surface3: #202020;
+      --border: #272727; --border-hover: #404040;
+      --text: #f0f0f0; --text-sub: #999; --text-muted: #555;
+      --success: #4ade80; --success-bg: rgba(74,222,128,0.1);
+      --warn: #fbbf24; --warn-bg: rgba(251,191,36,0.1);
+      --error: #f87171; --error-bg: rgba(248,113,113,0.1);
+      --j-key: #c0c0c0; --j-str: #d4d4d4; --j-num: #e0e0e0; --j-bool: #b0b0b0; --j-null: #555;
+      --dot: rgba(255,255,255,0.03); --shadow: 0 4px 20px rgba(0,0,0,0.6);
+      --chart-grid: rgba(255,255,255,0.06);
     }
-
     [data-theme="light"] {
-      --bg:           #f2f2f2;
-      --surface:      #ffffff;
-      --surface2:     #f7f7f7;
-      --surface3:     #ececec;
-      --border:       #e0e0e0;
-      --border-hover: #bbb;
-      --text:         #111111;
-      --text-sub:     #666;
-      --text-muted:   #aaa;
-      --success:      #16a34a;
-      --success-bg:   rgba(22,163,74,0.08);
-      --error:        #dc2626;
-      --error-bg:     rgba(220,38,38,0.08);
-      --j-key:        #333;
-      --j-str:        #444;
-      --j-num:        #222;
-      --j-bool:       #555;
-      --j-null:       #bbb;
-      --dot:          rgba(0,0,0,0.04);
-      --shadow:       0 4px 20px rgba(0,0,0,0.08);
+      --bg: #f2f2f2; --surface: #fff; --surface2: #f7f7f7; --surface3: #ececec;
+      --border: #e0e0e0; --border-hover: #bbb;
+      --text: #111; --text-sub: #666; --text-muted: #aaa;
+      --success: #16a34a; --success-bg: rgba(22,163,74,0.08);
+      --warn: #d97706; --warn-bg: rgba(217,119,6,0.08);
+      --error: #dc2626; --error-bg: rgba(220,38,38,0.08);
+      --j-key: #333; --j-str: #444; --j-num: #222; --j-bool: #555; --j-null: #bbb;
+      --dot: rgba(0,0,0,0.04); --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --chart-grid: rgba(0,0,0,0.06);
     }
 
-    html, body {
-      overflow-x: hidden;
-    }
-
+    html, body { overflow-x: hidden; }
     body {
       background: var(--bg);
       background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
@@ -66,171 +41,158 @@
       color: var(--text);
       font-family: 'Poppins', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: background-color 0.25s, color 0.25s;
+      display: flex; flex-direction: column;
+      transition: background-color .25s, color .25s;
     }
 
     /* ── Header ── */
     header {
       border-bottom: 1px solid var(--border);
       padding: 14px 32px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: flex; align-items: center; gap: 14px;
       background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position: sticky; top: 0; z-index: 100;
     }
-
-.header-title { flex: 1; }
-    .header-title h1 {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--red);
-      letter-spacing: 0.2px;
-    }
-    .header-title p {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 300;
-      margin-top: 2px;
-      letter-spacing: 0.2px;
-    }
-
+    .header-title { flex: 1; }
+    .header-title h1 { font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: .2px; }
+    .header-title p  { font-size: 12px; color: var(--text-muted); font-weight: 300; margin-top: 2px; }
     .header-right { display: flex; align-items: center; gap: 10px; }
 
-    .model-badge {
-      font-size: 10px;
-      font-weight: 500;
-      padding: 3px 10px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      background: var(--surface2);
-      display: none;
-    }
-    @media (min-width: 600px) { .model-badge { display: inline-block; } }
-
     #theme-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: border-color 0.15s, color 0.15s;
-      white-space: nowrap;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-sub); font-family: inherit; font-size: 11px; font-weight: 500;
+      padding: 6px 14px; border-radius: 20px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: border-color .15s, color .15s;
     }
     #theme-btn:hover { border-color: var(--border-hover); color: var(--text); }
 
-    /* ── Main ── */
-    main {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 400px 1fr;
-      gap: 24px;
-      max-width: 1280px;
-      margin: 0 auto;
-      width: 100%;
-      min-width: 0;
-      padding: 28px 32px;
-      align-items: start;
+    /* ── Tab Nav ── */
+    .tab-nav-wrap {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
     }
+    .tab-nav { display: flex; gap: 0; }
+    .tab-btn {
+      background: none; border: none; font-family: inherit;
+      font-size: 12px; font-weight: 500; color: var(--text-muted);
+      padding: 12px 20px; cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+      display: flex; align-items: center; gap: 7px;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text-sub); }
+    .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+    .tab-btn svg { width: 13px; height: 13px; stroke: currentColor; }
+
+    /* ── Tab content ── */
+    .tab-content { display: none; flex: 1; }
+    .tab-content.active { display: block; }
+
+    /* ── Page wrapper ── */
+    .page { max-width: 1300px; margin: 0 auto; width: 100%; padding: 28px 32px; }
     @media (max-width: 920px) {
-      main { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+      .page { padding: 16px; }
       header { padding: 12px 16px; }
+      .tab-nav-wrap { padding: 0 16px; }
     }
 
     /* ── Panel ── */
     .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
     }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 22px;
-    }
+    .panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
     .panel-num {
-      width: 22px; height: 22px;
-      border-radius: 5px;
-      background: var(--red);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width: 22px; height: 22px; border-radius: 5px;
+      background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .panel-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .panel-title { font-size: 13px; font-weight: 600; }
 
     /* ── Drop zone ── */
-    #drop-zone {
-      border: 1.5px dashed var(--border-hover);
-      border-radius: var(--radius);
-      padding: 36px 20px 28px;
-      text-align: center;
-      cursor: pointer;
-      position: relative;
-      background: var(--surface2);
-      transition: border-color 0.2s, background 0.2s;
+    .drop-zone {
+      border: 1.5px dashed var(--border-hover); border-radius: var(--radius);
+      padding: 36px 20px 28px; text-align: center; cursor: pointer;
+      position: relative; background: var(--surface2);
+      transition: border-color .2s, background .2s;
     }
-    #drop-zone:hover, #drop-zone.drag-over {
-      border-color: var(--red);
-      background: var(--surface3);
-    }
-    #drop-zone input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-    }
-
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--red); background: var(--surface3); }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
     .drop-icon-wrap {
-      width: 60px; height: 60px;
-      border-radius: 14px;
-      background: var(--surface3);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 14px;
-      transition: border-color 0.2s, background 0.2s;
+      width: 60px; height: 60px; border-radius: 14px;
+      background: var(--surface3); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+      transition: border-color .2s, background .2s;
     }
-    #drop-zone:hover .drop-icon-wrap,
-    #drop-zone.drag-over .drop-icon-wrap {
-      border-color: var(--red);
-      background: var(--red-dim);
-    }
-    .drop-icon-wrap svg { width: 26px; height: 26px; stroke: var(--text-sub); transition: stroke 0.2s; }
-    #drop-zone:hover .drop-icon-wrap svg,
-    #drop-zone.drag-over .drop-icon-wrap svg { stroke: var(--red); }
-
-    .drop-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+    .drop-zone:hover .drop-icon-wrap,
+    .drop-zone.drag-over .drop-icon-wrap { border-color: var(--red); background: var(--red-dim); }
+    .drop-icon-wrap svg { width: 26px; height: 26px; stroke: var(--text-sub); transition: stroke .2s; }
+    .drop-zone:hover .drop-icon-wrap svg,
+    .drop-zone.drag-over .drop-icon-wrap svg { stroke: var(--red); }
+    .drop-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
     .drop-sub   { font-size: 11px; color: var(--text-muted); font-weight: 300; }
     .drop-types { display: flex; justify-content: center; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
     .type-chip  {
-      font-size: 10px; font-weight: 500;
-      padding: 2px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px;
       background: var(--surface); border: 1px solid var(--border); color: var(--text-sub);
     }
 
-    /* File info */
-    #file-info {
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; background: var(--red); color: #fff; border: none;
+      padding: 13px; font-family: inherit; font-size: 13px; font-weight: 600;
+      letter-spacing: .3px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: opacity .15s, transform .15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--surface3); color: var(--text-muted); cursor: not-allowed; transform: none; }
+    .btn-primary svg { width: 15px; height: 15px; }
+
+    .btn-ghost {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-sub); font-family: inherit; font-size: 11px; font-weight: 500;
+      padding: 5px 14px; border-radius: 20px; cursor: pointer;
+      transition: all .2s; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+    .btn-ghost svg   { width: 12px; height: 12px; }
+    .btn-ghost.success { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+
+    .btn-danger {
+      background: none; border: 1px solid var(--border);
+      color: var(--error); font-family: inherit; font-size: 11px; font-weight: 500;
+      padding: 5px 14px; border-radius: 20px; cursor: pointer;
+      transition: all .2s; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-danger:hover { border-color: var(--error); background: var(--error-bg); }
+
+    /* ── Status ── */
+    .status-msg {
+      margin-top: 12px; font-size: 12px; min-height: 18px;
+      color: var(--text-muted); display: flex; align-items: center; gap: 7px;
+      border-radius: var(--radius-sm); padding: 0 2px;
+    }
+    .status-msg.error   { color: var(--error);   background: var(--error-bg);   padding: 8px 12px; }
+    .status-msg.success { color: var(--success); }
+    .status-msg.warn    { color: var(--warn);    background: var(--warn-bg);    padding: 8px 12px; }
+
+    .spinner {
+      width: 13px; height: 13px; border: 2px solid var(--border); border-top-color: var(--red);
+      border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── File info ── */
+    .file-info {
       display: none; margin-top: 12px; padding: 10px 14px;
       border: 1px solid var(--border); background: var(--surface2);
       border-radius: var(--radius-sm); gap: 10px; align-items: center;
     }
-    #file-info.visible { display: flex; }
+    .file-info.visible { display: flex; }
     .file-icon-sm {
       width: 30px; height: 30px; border-radius: 7px;
       background: var(--red-dim); border: 1px solid var(--red);
@@ -241,40 +203,7 @@
     .file-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .file-size { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 
-    /* Process button */
-    #process-btn {
-      margin-top: 16px; width: 100%;
-      background: var(--red);
-      color: #fff;
-      border: none; padding: 13px;
-      font-family: inherit; font-size: 13px; font-weight: 600;
-      letter-spacing: 0.3px;
-      border-radius: var(--radius-sm);
-      cursor: pointer; transition: opacity 0.15s, transform 0.15s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    #process-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
-    #process-btn:disabled { background: var(--surface3); color: var(--text-muted); cursor: not-allowed; transform: none; }
-    #process-btn svg { width: 15px; height: 15px; }
-
-    /* Status */
-    #status {
-      margin-top: 12px; font-size: 12px; min-height: 18px;
-      color: var(--text-muted); display: flex; align-items: center; gap: 7px;
-      border-radius: var(--radius-sm); padding: 0 2px;
-    }
-    #status.error   { color: var(--error); background: var(--error-bg); padding: 8px 12px; }
-    #status.success { color: var(--success); }
-
-    .spinner {
-      width: 13px; height: 13px;
-      border: 2px solid var(--border); border-top-color: var(--red);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite; flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Results panel ── */
+    /* ── Results ── */
     #results-empty {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; min-height: 300px; gap: 14px;
@@ -284,35 +213,33 @@
       background: var(--surface2); border: 1px solid var(--border);
       display: flex; align-items: center; justify-content: center;
     }
-    .empty-illustration svg { width: 32px; height: 32px; stroke: var(--text-muted); opacity: 0.4; }
+    .empty-illustration svg { width: 32px; height: 32px; stroke: var(--text-muted); opacity: .4; }
     .empty-text { font-size: 13px; font-weight: 500; color: var(--text-sub); }
     .empty-sub  { font-size: 11px; color: var(--text-muted); font-weight: 300; }
 
     #results-grid { display: none; gap: 14px; flex-direction: column; }
     #results-grid.visible { display: flex; }
 
-    /* Invoice type badge */
+    /* Type badge */
     #invoice-type-row {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
+      padding: 10px 14px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
     }
     .type-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
     .type-badge {
-      font-size: 11px; font-weight: 600;
-      padding: 3px 12px; border-radius: 20px;
-      background: var(--red-dim);
-      border: 1px solid var(--red);
-      color: var(--red);
-      letter-spacing: 0.3px;
+      font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px;
+      background: var(--red-dim); border: 1px solid var(--red); color: var(--red); letter-spacing: .3px;
     }
+    .dup-badge {
+      font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px;
+      background: var(--warn-bg); border: 1px solid var(--warn); color: var(--warn);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .dup-badge svg { width: 11px; height: 11px; stroke: currentColor; }
 
-    /* JSON toolbar */
-    .json-toolbar {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    }
+    /* JSON/Table toolbar */
+    .json-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .json-label {
       font-size: 11px; font-weight: 600; color: var(--text-sub); flex: 1;
       display: flex; align-items: center; gap: 6px;
@@ -320,31 +247,28 @@
     .json-label svg { width: 13px; height: 13px; stroke: var(--text-muted); }
 
     #proc-time {
-      font-size: 10.5px; color: var(--text-muted);
-      background: var(--surface2); border: 1px solid var(--border);
-      padding: 3px 10px; border-radius: 20px;
+      font-size: 10.5px; color: var(--text-muted); background: var(--surface2);
+      border: 1px solid var(--border); padding: 3px 10px; border-radius: 20px;
       white-space: nowrap; display: none; align-items: center; gap: 5px;
     }
-    #proc-time svg { width: 11px; height: 11px; stroke: var(--text-muted); }
+    #proc-time svg { width: 11px; height: 11px; }
 
-    #copy-btn {
-      background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text-sub); font-family: inherit; font-size: 11px; font-weight: 500;
-      padding: 5px 14px; border-radius: 20px; cursor: pointer;
-      transition: all 0.2s; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+    .view-toggle {
+      display: flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
     }
-    #copy-btn svg { width: 12px; height: 12px; }
-    #copy-btn:hover  { border-color: var(--border-hover); color: var(--text); }
-    #copy-btn.copied { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+    .view-toggle button {
+      background: none; border: none; font-family: inherit; font-size: 11px; font-weight: 500;
+      color: var(--text-muted); padding: 5px 12px; cursor: pointer; transition: all .15s;
+    }
+    .view-toggle button.active { background: var(--red); color: #fff; }
+    .view-toggle button:not(.active):hover { background: var(--surface2); color: var(--text-sub); }
 
     /* JSON block */
     #json-output {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 18px 20px;
-      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-      font-size: 13.5px; line-height: 1.85;
-      overflow-x: auto; overflow-y: auto;
-      max-height: 55vh; white-space: pre;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 18px 20px; font-family: 'SF Mono','Fira Code',monospace;
+      font-size: 13px; line-height: 1.85;
+      overflow-x: auto; overflow-y: auto; max-height: 55vh; white-space: pre;
     }
     .j-key  { color: var(--j-key); font-weight: 500; }
     .j-str  { color: var(--j-str); }
@@ -352,23 +276,165 @@
     .j-bool { color: var(--j-bool); }
     .j-null { color: var(--j-null); font-style: italic; }
 
+    /* Table view */
+    #table-output {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow: hidden; display: none;
+    }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--surface3); }
+    .data-table .td-key  { font-weight: 500; color: var(--text-sub); width: 38%; white-space: nowrap; }
+    .data-table .td-val  { color: var(--text); word-break: break-all; }
+    .data-table .td-section td {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text-muted); background: var(--surface3); padding: 6px 14px;
+    }
+    .items-mini { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
+    .items-mini th, .items-mini td { padding: 5px 8px; border: 1px solid var(--border); text-align: left; }
+    .items-mini th { background: var(--surface3); font-weight: 600; color: var(--text-sub); }
+
     /* Raw text */
     .raw-toggle {
       font-size: 11.5px; color: var(--text-muted); cursor: pointer;
       display: flex; gap: 6px; align-items: center; user-select: none;
-      padding: 2px 0; transition: color 0.15s;
+      padding: 2px 0; transition: color .15s;
     }
     .raw-toggle:hover { color: var(--text-sub); }
-    .raw-toggle svg { width: 12px; height: 12px; stroke: currentColor; transition: transform 0.2s; }
+    .raw-toggle svg { width: 12px; height: 12px; stroke: currentColor; transition: transform .2s; }
     .raw-toggle.open svg { transform: rotate(90deg); }
-
     #raw-text-box {
       display: none; background: var(--surface2); border: 1px solid var(--border);
       border-radius: var(--radius-sm); padding: 12px;
       font-size: 11px; line-height: 1.65; color: var(--text-muted);
       white-space: pre-wrap; max-height: 160px; overflow-y: auto;
-      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-family: 'SF Mono','Fira Code',monospace;
     }
+
+    /* ══ PROCESS TAB ══ */
+    #tab-process .page { display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 920px) { #tab-process .page { grid-template-columns: 1fr; } }
+
+/* ══ BATCH TAB ══ */
+    .batch-layout { display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 920px) { .batch-layout { grid-template-columns: 1fr; } }
+
+    .queue-list { display: flex; flex-direction: column; gap: 8px; }
+    .queue-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: var(--surface2);
+      transition: border-color .2s;
+    }
+    .queue-item.done    { border-color: rgba(74,222,128,.3); }
+    .queue-item.error   { border-color: rgba(248,113,113,.3); }
+    .queue-item.warning { border-color: rgba(251,191,36,.3); }
+    .qi-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .qi-icon.pending    { background: var(--surface3); }
+    .qi-icon.processing { background: var(--red-dim); border: 1px solid var(--red); }
+    .qi-icon.done       { background: var(--success-bg); border: 1px solid var(--success); }
+    .qi-icon.error      { background: var(--error-bg);   border: 1px solid var(--error); }
+    .qi-icon.warning    { background: var(--warn-bg);    border: 1px solid var(--warn); }
+    .qi-icon svg        { width: 13px; height: 13px; stroke: currentColor; }
+    .qi-body { flex: 1; min-width: 0; }
+    .qi-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .qi-sub  { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .qi-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .qi-actions button {
+      background: none; border: 1px solid var(--border); color: var(--text-sub);
+      font-size: 10px; font-family: inherit; padding: 3px 10px; border-radius: 4px;
+      cursor: pointer; transition: all .15s;
+    }
+    .qi-actions button:hover { border-color: var(--border-hover); color: var(--text); }
+
+    /* ══ HISTORY TAB ══ */
+    .history-toolbar {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .search-wrap {
+      flex: 1; min-width: 200px; position: relative;
+    }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; stroke: var(--text-muted); pointer-events: none; }
+    .search-wrap input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: 12px;
+      padding: 8px 12px 8px 32px; border-radius: var(--radius-sm);
+      outline: none; transition: border-color .15s;
+    }
+    .search-wrap input:focus { border-color: var(--border-hover); }
+    .search-wrap input::placeholder { color: var(--text-muted); }
+
+    select.filter-select {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: 12px;
+      padding: 8px 12px; border-radius: var(--radius-sm); outline: none; cursor: pointer;
+    }
+
+    .history-table-wrap { overflow-x: auto; }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .history-table th {
+      text-align: left; padding: 10px 14px;
+      font-size: 10px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--text-muted);
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .history-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: var(--surface2); }
+    .hist-type { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: var(--red-dim); color: var(--red); white-space: nowrap; }
+    .hist-dup  { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); }
+    .hist-actions { display: flex; gap: 6px; }
+    .hist-actions button {
+      background: none; border: 1px solid var(--border); color: var(--text-sub);
+      font-family: inherit; font-size: 10px; padding: 3px 10px; border-radius: 4px;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .hist-actions button:hover { border-color: var(--border-hover); color: var(--text); }
+    .empty-row td { text-align: center; padding: 48px; color: var(--text-muted); font-size: 13px; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); width: 90%; max-width: 720px;
+      max-height: 85vh; display: flex; flex-direction: column;
+    }
+    .modal-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+    }
+    .modal-title { flex: 1; font-size: 14px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { flex: 1; overflow-y: auto; padding: 22px; }
+
+    /* ══ ANALYTICS TAB ══ */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+    }
+    .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); }
+    .stat-value { font-size: 32px; font-weight: 700; margin-top: 6px; color: var(--text); }
+    .stat-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .stat-card.accent .stat-value { color: var(--red); }
+
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 820px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px;
+    }
+    .chart-card.wide { grid-column: span 2; }
+    @media (max-width: 820px) { .chart-card.wide { grid-column: span 1; } }
+    .chart-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 18px; }
+    .chart-wrap  { position: relative; height: 220px; }
+    .chart-wrap-tall { position: relative; height: 280px; }
 
     /* ── Footer ── */
     footer {
@@ -378,15 +444,9 @@
       background: var(--surface);
     }
     .footer-right { display: flex; align-items: center; gap: 6px; }
-    .live-dot {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--success);
-      animation: pulse 2.2s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    @media (max-width: 920px) {
-      footer { padding: 12px 16px; flex-direction: column; gap: 4px; text-align: center; }
-    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @media (max-width: 920px) { footer { padding: 12px 16px; flex-direction: column; gap: 4px; text-align: center; } }
   </style>
 </head>
 <body>
@@ -404,294 +464,841 @@
   </div>
 </header>
 
-<main>
-
-  <!-- Upload Panel -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-num">1</div>
-      <span class="panel-title">Upload Invoice</span>
-    </div>
-
-    <div id="drop-zone">
-      <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp" />
-      <div class="drop-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="16 16 12 12 8 16"/>
-          <line x1="12" y1="12" x2="12" y2="21"/>
-          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-        </svg>
-      </div>
-      <div class="drop-title">Drop your invoice here</div>
-      <div class="drop-sub">or click to browse files</div>
-      <div class="drop-types">
-        <span class="type-chip">PDF</span>
-        <span class="type-chip">PNG</span>
-        <span class="type-chip">JPG</span>
-        <span class="type-chip">TIFF</span>
-      </div>
-    </div>
-
-    <div id="file-info">
-      <div class="file-icon-sm">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-        </svg>
-      </div>
-      <div class="file-meta">
-        <div class="file-name" id="fn"></div>
-        <div class="file-size" id="fs"></div>
-      </div>
-    </div>
-
-    <button id="process-btn" disabled>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      Process Invoice
+<!-- Tab Nav -->
+<div class="tab-nav-wrap">
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('process')" id="tn-process">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Process
     </button>
 
-    <div id="status"></div>
+    <button class="tab-btn" onclick="switchTab('batch')" id="tn-batch">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="6" height="6"/><rect x="9" y="3" width="6" height="6"/><rect x="16" y="3" width="6" height="6"/><rect x="2" y="12" width="6" height="6"/><rect x="9" y="12" width="6" height="6"/></svg>
+      Batch
+    </button>
+    <button class="tab-btn" onclick="switchTab('history')" id="tn-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      History
+    </button>
+    <button class="tab-btn" onclick="switchTab('analytics')" id="tn-analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </button>
   </div>
+</div>
 
-  <!-- Results Panel -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-num">2</div>
-      <span class="panel-title">Extracted Data</span>
-    </div>
+<!-- ══ PROCESS TAB ══ -->
+<div class="tab-content active" id="tab-process">
+  <div class="page">
 
-    <div id="results-empty">
-      <div class="empty-illustration">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
+    <!-- Upload Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">1</div>
+        <span class="panel-title">Upload Invoice</span>
+      </div>
+
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp" />
+        <div class="drop-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+          </svg>
+        </div>
+        <div class="drop-title">Drop your invoice here</div>
+      </div>
+
+      <div class="file-info" id="file-info">
+        <div class="file-icon-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="file-meta">
+          <div class="file-name" id="fn"></div>
+          <div class="file-size" id="fs"></div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="process-btn" style="margin-top:16px" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-      </div>
-      <div class="empty-text">No invoice processed yet</div>
-      <div class="empty-sub">Upload a file on the left to get started</div>
+        Process Invoice
+      </button>
+      <div class="status-msg" id="status"></div>
     </div>
 
-    <div id="results-grid">
-
-      <!-- Detected type row -->
-      <div id="invoice-type-row">
-        <span class="type-label">Detected type</span>
-        <span class="type-badge" id="invoice-type-badge">—</span>
+    <!-- Results Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-num">2</div>
+        <span class="panel-title">Extracted Data</span>
       </div>
 
-      <!-- JSON toolbar -->
-      <div class="json-toolbar">
-        <span class="json-label">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
-            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      <div id="results-empty">
+        <div class="empty-illustration">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
           </svg>
-          JSON Output
-        </span>
-        <span id="proc-time">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </div>
+        <div class="empty-text">No invoice processed yet</div>
+        <div class="empty-sub">Upload a file to get started</div>
+      </div>
+
+      <div id="results-grid">
+        <div id="invoice-type-row">
+          <span class="type-label">Detected type</span>
+          <span class="type-badge" id="invoice-type-badge">—</span>
+          <span id="dup-warning-badge" style="display:none"></span>
+          <span style="flex:1"></span>
+          <a id="excel-dl-btn" style="display:none" class="btn-ghost">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Excel
+          </a>
+        </div>
+
+        <div class="json-toolbar">
+          <span class="json-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+            Output
+          </span>
+          <span id="proc-time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </span>
+          <div class="view-toggle">
+            <button id="vt-json"  class="active" onclick="setView('json')">JSON</button>
+            <button id="vt-table" onclick="setView('table')">Table</button>
+          </div>
+          <button class="btn-ghost" id="copy-btn" onclick="copyJson()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+          </button>
+        </div>
+
+        <div id="json-output"></div>
+        <div id="table-output"></div>
+
+        <div class="raw-toggle" id="raw-toggle-btn" onclick="toggleRaw()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          Raw extracted text
+        </div>
+        <div id="raw-text-box"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ BATCH TAB ══ -->
+<div class="tab-content" id="tab-batch">
+  <div class="page">
+    <div class="batch-layout">
+
+      <!-- Batch upload panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-num">1</div>
+          <span class="panel-title">Upload Multiple Invoices</span>
+        </div>
+
+        <div class="drop-zone" id="batch-drop">
+          <input type="file" id="batch-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp" multiple />
+          <div class="drop-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round">
+              <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+            </svg>
+          </div>
+          <div class="drop-title">Drop invoices here</div>
+        </div>
+
+        <div id="batch-file-count" style="margin-top:10px;font-size:11px;color:var(--text-muted);display:none"></div>
+
+        <button class="btn-primary" id="batch-btn" style="margin-top:16px" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
-        </span>
-        <button id="copy-btn" onclick="copyJson()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          Copy
+          Process All
+        </button>
+        <div class="status-msg" id="batch-status"></div>
+      </div>
+
+      <!-- Queue panel -->
+      <div class="panel">
+        <div class="panel-header" style="margin-bottom:14px">
+          <div class="panel-num">2</div>
+          <span class="panel-title">Processing Queue</span>
+          <span style="flex:1"></span>
+          <span id="batch-progress" style="font-size:11px;color:var(--text-muted)"></span>
+        </div>
+
+        <div id="batch-empty" style="text-align:center;padding:48px 0;color:var(--text-muted);font-size:13px">
+          No files queued yet
+        </div>
+        <div id="queue-list" class="queue-list" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY TAB ══ -->
+<div class="tab-content" id="tab-history">
+  <div class="page">
+    <div class="panel">
+      <div class="history-toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="hist-search" placeholder="Search vendor, invoice number…" oninput="filterHistory()" />
+        </div>
+        <select class="filter-select" id="hist-type-filter" onchange="filterHistory()">
+          <option value="">All Types</option>
+          <option value="PURCHASE_DOMESTIC">Purchase — Domestic</option>
+          <option value="IMPORT">Import</option>
+          <option value="SALE_DOMESTIC">Sale — Domestic</option>
+          <option value="SALE_EXPORT">Sale — Export</option>
+          <option value="SERVICES">Services</option>
+          <option value="EMPLOYEE_REIMBURSEMENT">Reimbursement</option>
+        </select>
+        <a href="/api/export/excel" class="btn-ghost" style="text-decoration:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Excel
+        </a>
+        <button class="btn-danger" onclick="clearHistory()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Clear All
         </button>
       </div>
 
-      <div id="json-output"></div>
-
-      <div class="raw-toggle" id="raw-toggle-btn" onclick="toggleRaw()">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-        Raw extracted text
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>#</th><th>File</th><th>Type</th>
+              <th>Invoice No.</th><th>Invoice Date</th>
+              <th>Vendor / Party</th><th>Total</th><th>Processed</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr class="empty-row"><td colspan="9">Loading…</td></tr>
+          </tbody>
+        </table>
       </div>
-      <div id="raw-text-box"></div>
-
     </div>
   </div>
+</div>
 
-</main>
+<!-- ══ ANALYTICS TAB ══ -->
+<div class="tab-content" id="tab-analytics">
+  <div class="page">
+    <div class="stats-row">
+      <div class="stat-card accent">
+        <div class="stat-label">Total Invoices</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-sub">Processed so far</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Invoice Types</div>
+        <div class="stat-value" id="stat-types">—</div>
+        <div class="stat-sub">Distinct categories</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Duplicates Found</div>
+        <div class="stat-value" id="stat-dups">—</div>
+        <div class="stat-sub">Flagged for review</div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Invoice Type Distribution</div>
+        <div class="chart-wrap"><canvas id="chart-types"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top Vendors by Volume</div>
+        <div class="chart-wrap"><canvas id="chart-vendors"></canvas></div>
+      </div>
+      <div class="chart-card wide">
+        <div class="chart-title">Daily Processing Volume</div>
+        <div class="chart-wrap-tall"><canvas id="chart-daily"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice detail modal -->
+<div class="modal-overlay" id="inv-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Invoice Details</span>
+      <div class="view-toggle" id="modal-view-toggle" style="display:none">
+        <button id="mvt-table" class="active" onclick="setModalView('table')">Table</button>
+        <button id="mvt-json"  onclick="setModalView('json')">JSON</button>
+      </div>
+      <a id="modal-excel-btn" class="btn-ghost" style="text-decoration:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Excel
+      </a>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
 
 <footer>
   <span>© 2026 Samtel Avionics — Invoice Processing Software</span>
   <div class="footer-right">
     <div class="live-dot"></div>
-    <span>Developed by VANCO AI
-    </span>
+    <span>Developed by VANCO AI</span>
   </div>
 </footer>
 
 <script>
-  // ── Theme ──────────────────────────────────────────────────────────────────
-  const sunSVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
-  const moonSVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+// ── Shared ──────────────────────────────────────────────────────────────────
+const sunSVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+const moonSVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+document.getElementById('theme-icon').innerHTML = sunSVG;
 
-  document.getElementById('theme-icon').innerHTML = sunSVG;
+function toggleTheme() {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('theme-icon').innerHTML  = dark ? moonSVG : sunSVG;
+  document.getElementById('theme-label').textContent = dark ? 'Dark' : 'Light';
+}
 
-  function toggleTheme() {
-    const html  = document.documentElement;
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    document.getElementById('theme-icon').innerHTML  = isDark ? moonSVG : sunSVG;
-    document.getElementById('theme-label').textContent = isDark ? 'Dark' : 'Light';
-  }
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('tn-'+name).classList.add('active');
+  if (name === 'history')   loadHistory();
+  if (name === 'analytics') loadAnalytics();
+}
 
-  // ── Invoice type labels ────────────────────────────────────────────────────
-  const TYPE_LABELS = {
-    PURCHASE_DOMESTIC:      'Purchase — Domestic',
-    IMPORT:                 'Import',
-    SALE_DOMESTIC:          'Sale — Domestic',
-    SALE_EXPORT:            'Sale — Export',
-    SERVICES:               'Services / Job Work',
-    EMPLOYEE_REIMBURSEMENT: 'Employee Reimbursement',
-  };
+const TYPE_LABELS = {
+  PURCHASE_DOMESTIC:'Purchase — Domestic', IMPORT:'Import',
+  SALE_DOMESTIC:'Sale — Domestic', SALE_EXPORT:'Sale — Export',
+  SERVICES:'Services / Job Work', EMPLOYEE_REIMBURSEMENT:'Employee Reimbursement',
+};
 
-  // ── File handling ──────────────────────────────────────────────────────────
-  const dropZone   = document.getElementById('drop-zone');
-  const fileInput  = document.getElementById('file-input');
-  const fileInfo   = document.getElementById('file-info');
-  const fnEl       = document.getElementById('fn');
-  const fsEl       = document.getElementById('fs');
-  const processBtn = document.getElementById('process-btn');
-  const statusEl   = document.getElementById('status');
-  const resultsEmpty = document.getElementById('results-empty');
-  const resultsGrid  = document.getElementById('results-grid');
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtBytes(b) {
+  if (b < 1024) return b+' B';
+  if (b < 1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(2)+' MB';
+}
 
-  let selectedFile = null;
-
-  function formatBytes(b) {
-    if (b < 1024)    return b + ' B';
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-    return (b / 1048576).toFixed(2) + ' MB';
-  }
-
-  function setFile(file) {
-    selectedFile = file;
-    fnEl.textContent = file.name;
-    fsEl.textContent = formatBytes(file.size);
-    fileInfo.classList.add('visible');
-    processBtn.disabled = false;
-    setStatus('');
-  }
-
-  fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
-  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault(); dropZone.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0];
-    if (f) { setFile(f); fileInput.files = e.dataTransfer.files; }
-  });
-
-  function setStatus(msg, type = '') {
-    statusEl.innerHTML = msg;
-    statusEl.className = type;
-  }
-
-  function setLoading(on) {
-    processBtn.disabled = on;
-    if (on) {
-      statusEl.innerHTML = '<span class="spinner"></span> Classifying & extracting…';
-      statusEl.className = '';
-    }
-  }
-
-  // ── JSON rendering ─────────────────────────────────────────────────────────
-  let _lastJson = null;
-
-  function escapeHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function syntaxHighlight(json) {
-    return JSON.stringify(json, null, 2).replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-      m => {
-        if (/^"/.test(m)) {
-          if (/:$/.test(m)) return `<span class="j-key">${escapeHtml(m)}</span>`;
-          return `<span class="j-str">${escapeHtml(m)}</span>`;
-        }
-        if (/true|false/.test(m)) return `<span class="j-bool">${m}</span>`;
-        if (/null/.test(m))       return `<span class="j-null">${m}</span>`;
-        return `<span class="j-num">${m}</span>`;
+// ── JSON syntax highlight ──────────────────────────────────────────────────
+function syntaxHighlight(json) {
+  return JSON.stringify(json, null, 2).replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    m => {
+      if (/^"/.test(m)) {
+        if (/:$/.test(m)) return `<span class="j-key">${escHtml(m)}</span>`;
+        return `<span class="j-str">${escHtml(m)}</span>`;
       }
-    );
-  }
-
-  function renderResults(data, rawPreview, elapsed) {
-    const d    = data.invoice_data || {};
-    const type = data.invoice_type || '';
-    _lastJson = d;
-
-    document.getElementById('invoice-type-badge').textContent = TYPE_LABELS[type] || type;
-    document.getElementById('json-output').innerHTML    = syntaxHighlight(d);
-    document.getElementById('raw-text-box').textContent = rawPreview;
-
-    const pt = document.getElementById('proc-time');
-    pt.style.display = 'flex';
-    pt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${elapsed}s`;
-
-    resultsGrid.classList.add('visible');
-    resultsEmpty.style.display = 'none';
-  }
-
-  function copyJson() {
-    if (!_lastJson) return;
-    navigator.clipboard.writeText(JSON.stringify(_lastJson, null, 2)).then(() => {
-      const btn = document.getElementById('copy-btn');
-      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-        btn.classList.remove('copied');
-      }, 1800);
-    });
-  }
-
-  function toggleRaw() {
-    const box = document.getElementById('raw-text-box');
-    const btn = document.getElementById('raw-toggle-btn');
-    const open = box.style.display === 'block';
-    box.style.display = open ? 'none' : 'block';
-    btn.classList.toggle('open', !open);
-  }
-
-  // ── Submit ─────────────────────────────────────────────────────────────────
-  processBtn.addEventListener('click', async () => {
-    if (!selectedFile) return;
-    setLoading(true);
-    resultsGrid.classList.remove('visible');
-    resultsEmpty.style.display = 'flex';
-
-    const form = new FormData();
-    form.append('file', selectedFile);
-    const t0 = Date.now();
-
-    try {
-      const res     = await fetch('/api/process-invoice', { method: 'POST', body: form });
-      const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
-      const json    = await res.json();
-
-      if (!res.ok) { setStatus(json.detail || 'An error occurred.', 'error'); return; }
-
-      setStatus(
-        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Extraction complete`,
-        'success'
-      );
-      renderResults(json, json.raw_text_preview || '', elapsed);
-    } catch (err) {
-      setStatus(err.message, 'error');
-    } finally {
-      setLoading(false);
+      if (/true|false/.test(m)) return `<span class="j-bool">${m}</span>`;
+      if (/null/.test(m))       return `<span class="j-null">${m}</span>`;
+      return `<span class="j-num">${m}</span>`;
     }
+  );
+}
+
+// ── Table view builder ─────────────────────────────────────────────────────
+function buildTable(data, depth=0) {
+  let html = '';
+  for (const [k, v] of Object.entries(data)) {
+    if (v === null || v === undefined) continue;
+    const label = k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (Array.isArray(v) && v.length && typeof v[0] === 'object') {
+      html += `<tr class="td-section"><td colspan="2">${escHtml(label)}</td></tr>`;
+      const hdrs = [...new Set(v.flatMap(Object.keys))];
+      html += `<tr><td colspan="2"><table class="items-mini"><thead><tr>${hdrs.map(h=>`<th>${escHtml(h.replace(/_/g,' '))}</th>`).join('')}</tr></thead><tbody>`;
+      for (const row of v) html += `<tr>${hdrs.map(h=>`<td>${escHtml(row[h]??'')}</td>`).join('')}</tr>`;
+      html += `</tbody></table></td></tr>`;
+    } else if (typeof v === 'object' && !Array.isArray(v)) {
+      html += `<tr class="td-section"><td colspan="2">${escHtml(label)}</td></tr>`;
+      html += buildTable(v, depth+1);
+    } else {
+      html += `<tr><td class="td-key">${escHtml(label)}</td><td class="td-val">${escHtml(String(v))}</td></tr>`;
+    }
+  }
+  return html;
+}
+
+// ── PROCESS TAB ───────────────────────────────────────────────────────────
+
+let _selectedFile = null, _lastJson = null, _currentView = 'json', _lastId = null;
+
+const dropZone   = document.getElementById('drop-zone');
+const fileInput  = document.getElementById('file-input');
+const fileInfo   = document.getElementById('file-info');
+const processBtn = document.getElementById('process-btn');
+const statusEl   = document.getElementById('status');
+
+function setFile(file) {
+  _selectedFile = file;
+  document.getElementById('fn').textContent = file.name;
+  document.getElementById('fs').textContent = fmtBytes(file.size);
+  fileInfo.classList.add('visible');
+  processBtn.disabled = false;
+  statusEl.innerHTML = ''; statusEl.className = 'status-msg';
+}
+
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0]; if (f) { setFile(f); fileInput.files = e.dataTransfer.files; }
+});
+
+function setView(v) {
+  _currentView = v;
+  document.getElementById('vt-json').classList.toggle('active', v==='json');
+  document.getElementById('vt-table').classList.toggle('active', v==='table');
+  document.getElementById('json-output').style.display  = v==='json'  ? 'block' : 'none';
+  document.getElementById('table-output').style.display = v==='table' ? 'block' : 'none';
+}
+
+function renderResults(data, rawPreview, elapsed) {
+  const d = data.invoice_data || {};
+  const type = data.invoice_type || '';
+  _lastJson = d; _lastId = data.id || null;
+
+  document.getElementById('invoice-type-badge').textContent = TYPE_LABELS[type] || type;
+
+  const dupBadge = document.getElementById('dup-warning-badge');
+  if (data.duplicate_warning) {
+    dupBadge.style.display = 'flex';
+    dupBadge.className = 'dup-badge';
+    dupBadge.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Duplicate`;
+    dupBadge.title = data.duplicate_warning;
+  } else {
+    dupBadge.style.display = 'none';
+  }
+
+  const exBtn = document.getElementById('excel-dl-btn');
+  if (_lastId) { exBtn.href = `/api/history/${_lastId}/excel`; exBtn.style.display = 'flex'; }
+  else { exBtn.style.display = 'none'; }
+
+  document.getElementById('json-output').innerHTML    = syntaxHighlight(d);
+  document.getElementById('table-output').innerHTML   = `<table class="data-table"><tbody>${buildTable(d)}</tbody></table>`;
+  document.getElementById('raw-text-box').textContent = rawPreview;
+
+  const pt = document.getElementById('proc-time');
+  pt.style.display = 'flex';
+  pt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${elapsed}s`;
+
+  setView(_currentView);
+  document.getElementById('results-grid').classList.add('visible');
+  document.getElementById('results-empty').style.display = 'none';
+}
+
+function copyJson() {
+  if (!_lastJson) return;
+  navigator.clipboard.writeText(JSON.stringify(_lastJson, null, 2)).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    btn.classList.add('success');
+    setTimeout(() => {
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+      btn.classList.remove('success');
+    }, 1800);
   });
+}
+
+function toggleRaw() {
+  const box = document.getElementById('raw-text-box');
+  const btn = document.getElementById('raw-toggle-btn');
+  const open = box.style.display === 'block';
+  box.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('open', !open);
+}
+
+processBtn.addEventListener('click', async () => {
+  if (!_selectedFile) return;
+  processBtn.disabled = true;
+  statusEl.innerHTML = '<span class="spinner"></span> Classifying & extracting…';
+  statusEl.className = 'status-msg';
+  document.getElementById('results-grid').classList.remove('visible');
+  document.getElementById('results-empty').style.display = 'flex';
+
+  const form = new FormData(); form.append('file', _selectedFile);
+  const t0 = Date.now();
+  try {
+    const res     = await fetch('/api/process-invoice', { method:'POST', body:form });
+    const elapsed = ((Date.now()-t0)/1000).toFixed(2);
+    const json    = await res.json();
+    if (!res.ok) { statusEl.innerHTML = json.detail || 'Error'; statusEl.className = 'status-msg error'; return; }
+    statusEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Extraction complete`;
+    statusEl.className = 'status-msg success';
+    renderResults(json, json.raw_text_preview || '', elapsed);
+  } catch(err) {
+    statusEl.innerHTML = err.message; statusEl.className = 'status-msg error';
+  } finally {
+    processBtn.disabled = false;
+  }
+});
+
+// ── BATCH TAB ─────────────────────────────────────────────────────────────
+
+let _batchFiles = [];
+let _batchStartTimes = [];   // ms timestamp when each file started processing
+let _batchTimerHandle = null;
+
+const batchDrop  = document.getElementById('batch-drop');
+const batchInput = document.getElementById('batch-input');
+const batchBtn   = document.getElementById('batch-btn');
+const batchSt    = document.getElementById('batch-status');
+
+function setBatchFiles(files) {
+  _batchFiles = Array.from(files).slice(0, 20);
+  const countEl = document.getElementById('batch-file-count');
+  if (_batchFiles.length) {
+    countEl.style.display = 'block';
+    countEl.textContent = `${_batchFiles.length} file${_batchFiles.length>1?'s':''} selected`;
+    batchBtn.disabled = false;
+  } else {
+    countEl.style.display = 'none';
+    batchBtn.disabled = true;
+  }
+  renderQueue();
+}
+
+batchInput.addEventListener('change', () => setBatchFiles(batchInput.files));
+batchDrop.addEventListener('dragover',  e => { e.preventDefault(); batchDrop.classList.add('drag-over'); });
+batchDrop.addEventListener('dragleave', () => batchDrop.classList.remove('drag-over'));
+batchDrop.addEventListener('drop', e => {
+  e.preventDefault(); batchDrop.classList.remove('drag-over');
+  setBatchFiles(e.dataTransfer.files);
+});
+
+function buildQueueItemHTML(f, i, st) {
+  const iconClass = st === 'pending'    ? 'pending'
+                  : st === 'processing' ? 'processing'
+                  : st.dup             ? 'warning'
+                  : st.type            ? 'done' : 'error';
+  const iconSvg = (iconClass === 'done' || iconClass === 'warning')
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+    : iconClass === 'error'
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+    : iconClass === 'processing'
+    ? `<div class="spinner" style="width:12px;height:12px"></div>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg>`;
+  const sub = st === 'pending'    ? 'Waiting…'
+            : st === 'processing' ? 'Processing…'
+            : st.type  ? (TYPE_LABELS[st.type] || st.type)
+            : st.error ? `Error: ${escHtml(st.error)}`
+            : '';
+  const timeTag = st.elapsed
+    ? `<span style="margin-left:6px;font-size:10px;color:var(--text-muted)">${st.elapsed}s</span>`
+    : '';
+  const warnTag  = st.dup ? ` <span class="hist-dup">Dup</span>` : '';
+  const actBtns  = st.id  ? `<div class="qi-actions"><button onclick="showModal(${st.id})">View</button><a href="/api/history/${st.id}/excel" style="text-decoration:none"><button>Excel</button></a></div>` : '';
+  const itemCls  = iconClass === 'warning' ? 'warning' : iconClass === 'done' ? 'done' : iconClass === 'error' ? 'error' : '';
+  return `<div id="qi-${i}" class="queue-item ${itemCls}">
+    <div class="qi-icon ${iconClass}">${iconSvg}</div>
+    <div class="qi-body">
+      <div class="qi-name">${escHtml(f.name)}</div>
+      <div class="qi-sub" id="qi-sub-${i}">${sub}${timeTag}${warnTag}</div>
+    </div>
+    ${actBtns}
+  </div>`;
+}
+
+function renderQueue(statuses) {
+  const list  = document.getElementById('queue-list');
+  const empty = document.getElementById('batch-empty');
+  if (!_batchFiles.length) { list.style.display = 'none'; empty.style.display = 'block'; return; }
+  empty.style.display = 'none'; list.style.display = 'flex';
+  // Full rebuild only (called once on file selection)
+  list.innerHTML = _batchFiles.map((f, i) => buildQueueItemHTML(f, i, statuses && statuses[i] ? statuses[i] : 'pending')).join('');
+}
+
+function replaceQueueItem(i, st) {
+  // Swap out only one item — leaves all others untouched
+  const old = document.getElementById(`qi-${i}`);
+  if (!old) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = buildQueueItemHTML(_batchFiles[i], i, st);
+  old.replaceWith(tmp.firstElementChild);
+}
+
+batchBtn.addEventListener('click', async () => {
+  if (!_batchFiles.length) return;
+  batchBtn.disabled = true;
+  _batchStartTimes = new Array(_batchFiles.length).fill(null);
+  const statuses = _batchFiles.map(() => 'pending');
+  renderQueue(statuses);
+
+  let done = 0;
+  const total = _batchFiles.length;
+  const updateProgress = () => {
+    document.getElementById('batch-progress').textContent = `${done}/${total} done`;
+    batchSt.innerHTML = `<span class="spinner"></span> Processing ${done < total ? done+1 : total} of ${total}…`;
+    batchSt.className = 'status-msg';
+  };
+  updateProgress();
+
+  // Live timer — only updates the elapsed-time text of currently-processing items
+  if (_batchTimerHandle) clearInterval(_batchTimerHandle);
+  _batchTimerHandle = setInterval(() => {
+    let anyProcessing = false;
+    statuses.forEach((st, i) => {
+      if (st === 'processing' && _batchStartTimes[i]) {
+        anyProcessing = true;
+        const subEl = document.getElementById(`qi-sub-${i}`);
+        if (subEl) {
+          const sec = ((Date.now() - _batchStartTimes[i]) / 1000).toFixed(1);
+          subEl.innerHTML = `Processing… <span style="margin-left:6px;font-size:10px;color:var(--red);font-weight:600">${sec}s</span>`;
+        }
+      }
+    });
+    if (!anyProcessing) { clearInterval(_batchTimerHandle); _batchTimerHandle = null; }
+  }, 200);
+
+  // Process with max 3 concurrent
+  const sem = { count: 3, queue: [] };
+  async function withSem(fn) {
+    if (sem.count > 0) { sem.count--; } else { await new Promise(r => sem.queue.push(r)); }
+    try { return await fn(); } finally { if (sem.queue.length) { sem.queue.shift()(); } else { sem.count++; } }
+  }
+
+  const promises = _batchFiles.map((file, i) =>
+    withSem(async () => {
+      _batchStartTimes[i] = Date.now();
+      statuses[i] = 'processing';
+      replaceQueueItem(i, 'processing');
+      const form = new FormData(); form.append('file', file);
+      try {
+        const res     = await fetch('/api/process-invoice', { method:'POST', body:form });
+        const elapsed = ((Date.now() - _batchStartTimes[i]) / 1000).toFixed(1);
+        const json    = await res.json();
+        statuses[i] = res.ok
+          ? { type: json.invoice_type, id: json.id, dup: !!json.duplicate_warning, elapsed }
+          : { error: json.detail || 'Failed', elapsed };
+      } catch(e) {
+        statuses[i] = { error: e.message, elapsed: ((Date.now() - _batchStartTimes[i]) / 1000).toFixed(1) };
+      }
+      done++;
+      updateProgress();
+      replaceQueueItem(i, statuses[i]);   // update only this item immediately
+    })
+  );
+
+  await Promise.all(promises);
+  clearInterval(_batchTimerHandle); _batchTimerHandle = null;
+  batchSt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> All ${total} files processed`;
+  batchSt.className = 'status-msg success';
+  batchBtn.disabled = false;
+  document.getElementById('batch-progress').textContent = `${total}/${total} done`;
+});
+
+// ── HISTORY TAB ───────────────────────────────────────────────────────────
+
+let _historyData = [];
+
+async function loadHistory() {
+  try {
+    const res = await fetch('/api/history');
+    _historyData = await res.json();
+    renderHistory(_historyData);
+  } catch(e) {
+    document.getElementById('history-body').innerHTML = `<tr class="empty-row"><td colspan="9">Failed to load history</td></tr>`;
+  }
+}
+
+function filterHistory() {
+  const q    = document.getElementById('hist-search').value.toLowerCase();
+  const type = document.getElementById('hist-type-filter').value;
+  const filtered = _historyData.filter(r => {
+    const matchType  = !type || r.invoice_type === type;
+    const matchQuery = !q || [r.filename,r.invoice_number,r.party_name,r.invoice_date].some(f => (f||'').toLowerCase().includes(q));
+    return matchType && matchQuery;
+  });
+  renderHistory(filtered);
+}
+
+function renderHistory(rows) {
+  const tbody = document.getElementById('history-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">No invoices found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const typeLbl = TYPE_LABELS[r.invoice_type] || r.invoice_type || '—';
+    const dup = r.duplicate_of ? `<span class="hist-dup">Dup</span>` : '';
+    const date = r.processed_at ? r.processed_at.slice(0,10) : '—';
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:11px">${r.id}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.filename||'')}">${escHtml(r.filename||'—')}</td>
+      <td><span class="hist-type">${escHtml(typeLbl)}</span></td>
+      <td style="font-size:11px">${escHtml(r.invoice_number||'—')}</td>
+      <td style="font-size:11px">${escHtml(r.invoice_date||'—')}</td>
+      <td>${escHtml(r.party_name||'—')}</td>
+      <td style="font-size:11px">${escHtml(r.total_amount||'—')}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${date} ${dup}</td>
+      <td><div class="hist-actions">
+        <button onclick="showModal(${r.id})">View</button>
+        <a href="/api/history/${r.id}/excel" style="text-decoration:none"><button>Excel</button></a>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function clearHistory() {
+  if (!confirm('Clear all invoice history? This cannot be undone.')) return;
+  await fetch('/api/history', { method: 'DELETE' });
+  _historyData = [];
+  renderHistory([]);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+
+let _modalData = null, _modalView = 'table';
+
+function setModalView(v) {
+  _modalView = v;
+  document.getElementById('mvt-table').classList.toggle('active', v === 'table');
+  document.getElementById('mvt-json').classList.toggle('active',  v === 'json');
+  if (!_modalData) return;
+  const body = document.getElementById('modal-body');
+  if (v === 'table') {
+    body.innerHTML = `<table class="data-table"><tbody>${buildTable(_modalData)}</tbody></table>`;
+  } else {
+    body.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 20px;font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;line-height:1.8;overflow-x:auto;white-space:pre">${syntaxHighlight(_modalData)}</div>`;
+  }
+}
+
+async function showModal(id) {
+  _modalData = null; _modalView = 'table';
+  document.getElementById('inv-modal').classList.add('open');
+  document.getElementById('modal-view-toggle').style.display = 'none';
+  document.getElementById('modal-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div class="spinner" style="margin:0 auto"></div></div>';
+  document.getElementById('modal-excel-btn').href = `/api/history/${id}/excel`;
+  try {
+    const res  = await fetch(`/api/history/${id}`);
+    const data = await res.json();
+    _modalData = data.invoice_data || {};
+    document.getElementById('modal-title').textContent = `${TYPE_LABELS[data.invoice_type]||data.invoice_type} — ${data.filename}`;
+    document.getElementById('modal-view-toggle').style.display = 'flex';
+    document.getElementById('mvt-table').classList.add('active');
+    document.getElementById('mvt-json').classList.remove('active');
+    setModalView('table');
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML = `<p style="color:var(--error)">Failed to load: ${e.message}</p>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('inv-modal').classList.remove('open');
+}
+document.getElementById('inv-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ── ANALYTICS TAB ─────────────────────────────────────────────────────────
+
+let _charts = {};
+
+function destroyChart(id) { if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; } }
+
+function chartColors(n) {
+  const base = ['#cc1f1f','#e05252','#f08080','#b91c1c','#991b1b','#7f1d1d','#fca5a5','#fecaca','#ef4444','#dc2626'];
+  return Array.from({length:n}, (_,i) => base[i % base.length]);
+}
+
+async function loadAnalytics() {
+  try {
+    const res  = await fetch('/api/analytics');
+    const data = await res.json();
+
+    document.getElementById('stat-total').textContent = data.total_count;
+    document.getElementById('stat-types').textContent = data.by_type.length;
+    document.getElementById('stat-dups').textContent  = data.duplicate_count;
+
+    // Type donut
+    destroyChart('types');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const textColor = isDark ? '#999' : '#666';
+
+    if (data.by_type.length) {
+      _charts['types'] = new Chart(document.getElementById('chart-types'), {
+        type: 'doughnut',
+        data: {
+          labels: data.by_type.map(d => TYPE_LABELS[d.type]||d.type),
+          datasets: [{ data: data.by_type.map(d=>d.count), backgroundColor: chartColors(data.by_type.length), borderWidth: 2, borderColor: isDark?'#111':'#fff' }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color:textColor, font:{family:'Poppins',size:11}, padding:12 } } } }
+      });
+    }
+
+    // Vendors bar
+    destroyChart('vendors');
+    if (data.top_vendors.length) {
+      _charts['vendors'] = new Chart(document.getElementById('chart-vendors'), {
+        type: 'bar',
+        data: {
+          labels: data.top_vendors.map(d => d.name.length > 18 ? d.name.slice(0,18)+'…' : d.name),
+          datasets: [{ data: data.top_vendors.map(d=>d.count), backgroundColor: '#cc1f1f', borderRadius: 4 }]
+        },
+        options: {
+          indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false} },
+          scales:{
+            x:{ grid:{color:gridColor}, ticks:{color:textColor,font:{family:'Poppins',size:10}}, beginAtZero:true },
+            y:{ grid:{display:false}, ticks:{color:textColor,font:{family:'Poppins',size:10}} }
+          }
+        }
+      });
+    }
+
+    // Daily line
+    destroyChart('daily');
+    if (data.daily.length) {
+      _charts['daily'] = new Chart(document.getElementById('chart-daily'), {
+        type: 'line',
+        data: {
+          labels: data.daily.map(d=>d.date),
+          datasets: [{
+            data: data.daily.map(d=>d.count),
+            borderColor: '#cc1f1f', backgroundColor: 'rgba(204,31,31,0.1)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor:'#cc1f1f'
+          }]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false} },
+          scales:{
+            x:{ grid:{color:gridColor}, ticks:{color:textColor,font:{family:'Poppins',size:10},maxRotation:45} },
+            y:{ grid:{color:gridColor}, ticks:{color:textColor,font:{family:'Poppins',size:10}}, beginAtZero:true }
+          }
+        }
+      });
+    }
+
+  } catch(e) { console.error('Analytics error:', e); }
+}
+
+
 </script>
 </body>
 </html>
