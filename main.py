@@ -2,6 +2,8 @@ import os
 import io
 import json
 import sqlite3
+import base64
+from openai import OpenAI
 import asyncio
 from pathlib import Path
 from datetime import datetime
@@ -33,6 +35,9 @@ if not GROQ_API_KEY:
     raise RuntimeError("GROQ_API_KEY not set in environment or .env file")
 
 groq_client = Groq(api_key=GROQ_API_KEY)
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 ALLOWED_TYPES = {
     "application/pdf",
@@ -421,19 +426,7 @@ def _ocr_pdf_with_pymupdf(file_bytes: bytes, dpi: int = 300) -> str:
     return "\n\n".join(parts)
 
 
-def extract_text_from_pdf(file_bytes: bytes) -> str:
-    text_parts = []
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                text_parts.append(text)
-    if text_parts:
-        return "\n\n".join(text_parts)
-    return _ocr_pdf_with_pymupdf(file_bytes, dpi=300)
-
-
-def extract_text_from_image(file_bytes: bytes) -> str:
+def _ocr_image_with_tesseract(file_bytes: bytes) -> str:
     if not TESSERACT_AVAILABLE:
         raise HTTPException(
             status_code=501,
@@ -441,6 +434,84 @@ def extract_text_from_image(file_bytes: bytes) -> str:
         )
     image = Image.open(io.BytesIO(file_bytes))
     return pytesseract.image_to_string(image)
+
+
+def _ocr_with_openai_vlm(file_bytes: bytes, is_pdf: bool) -> str:
+    images = []
+    if is_pdf:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        for page in doc:
+            pix = page.get_pixmap(dpi=150)
+            png_bytes = pix.tobytes("png")
+            images.append((png_bytes, "image/png"))
+        doc.close()
+    else:
+        try:
+            img = Image.open(io.BytesIO(file_bytes))
+            fmt = (img.format or "PNG").lower()
+            mime = f"image/{fmt}"
+        except Exception:
+            mime = "image/png"
+        images.append((file_bytes, mime))
+
+    transcriptions = []
+    for idx, (img_bytes, mime) in enumerate(images):
+        b64_img = base64.b64encode(img_bytes).decode("utf-8")
+        prompt = "You are an expert OCR engine. Transcribe all readable text from this invoice page. Do not summarize or omit any details. Maintain layout/tables where possible."
+        if len(images) > 1:
+            prompt = f"You are an expert OCR engine. Transcribe all readable text from page {idx + 1} of this invoice. Do not summarize or omit any details. Maintain layout/tables where possible."
+            
+        resp = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime};base64,{b64_img}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature=0.0,
+        )
+        text = resp.choices[0].message.content.strip()
+        transcriptions.append(text)
+
+    return "\n\n".join(transcriptions)
+
+
+def extract_text_from_pdf(file_bytes: bytes) -> tuple[str, str]:
+    text_parts = []
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                text_parts.append(text)
+    if text_parts:
+        return "\n\n".join(text_parts), "Digital (Native)"
+
+    if openai_client:
+        try:
+            return _ocr_with_openai_vlm(file_bytes, is_pdf=True), "Scanned (VLM)"
+        except Exception:
+            return _ocr_pdf_with_pymupdf(file_bytes, dpi=300), "Scanned (OCR)"
+    return _ocr_pdf_with_pymupdf(file_bytes, dpi=300), "Scanned (OCR)"
+
+
+def extract_text_from_image(file_bytes: bytes) -> tuple[str, str]:
+    if openai_client:
+        try:
+            return _ocr_with_openai_vlm(file_bytes, is_pdf=False), "Scanned (VLM)"
+        except Exception:
+            return _ocr_image_with_tesseract(file_bytes), "Scanned (OCR)"
+    return _ocr_image_with_tesseract(file_bytes), "Scanned (OCR)"
+
+
 
 
 # ── LLM helpers ───────────────────────────────────────────────────────────────
@@ -523,9 +594,9 @@ def extract_invoice_data(invoice_type: str, raw_text: str) -> dict:
 
 def _process_file_sync(file_bytes: bytes, filename: str, content_type: str) -> dict:
     if content_type == "application/pdf":
-        raw_text = extract_text_from_pdf(file_bytes)
+        raw_text, ocr_method = extract_text_from_pdf(file_bytes)
     else:
-        raw_text = extract_text_from_image(file_bytes)
+        raw_text, ocr_method = extract_text_from_image(file_bytes)
 
     if not raw_text or len(raw_text.strip()) < 20:
         raise ValueError("Could not extract readable text. Ensure the file is not a low-resolution scan.")
@@ -539,15 +610,30 @@ def _process_file_sync(file_bytes: bytes, filename: str, content_type: str) -> d
 
     row_id = _save_invoice(filename, invoice_type, invoice_data, dup[0] if dup else None)
 
+    # Save processed file to uploads directory
+    try:
+        ext = Path(filename).suffix or ".pdf"
+        uploads_dir = Path(__file__).parent / "uploads"
+        uploads_dir.mkdir(exist_ok=True)
+        saved_file = uploads_dir / f"{row_id}{ext}"
+        saved_file.write_bytes(file_bytes)
+        file_url = f"/uploads/{row_id}{ext}"
+    except Exception as e:
+        print(f"Failed to save file to uploads: {e}")
+        file_url = None
+
     return {
         "status":            "success",
         "id":                row_id,
         "filename":          filename,
         "invoice_type":      invoice_type,
+        "ocr_method":        ocr_method,
+        "file_url":          file_url,
         "invoice_data":      invoice_data,
         "duplicate_warning": dup_warning,
         "raw_text_preview":  raw_text[:500] + ("..." if len(raw_text) > 500 else ""),
     }
+
 
 
 # ── API ────────────────────────────────────────────────────────────────────────
@@ -635,7 +721,18 @@ async def get_invoice(invoice_id: int):
             "invoice_date","party_name","total_amount","data_json","duplicate_of"]
     d = dict(zip(keys, row))
     d["invoice_data"] = json.loads(d.pop("data_json"))
+
+    # Find matching saved file
+    file_url = None
+    uploads_dir = Path(__file__).parent / "uploads"
+    if uploads_dir.exists():
+        for f in uploads_dir.iterdir():
+            if f.is_file() and f.name.startswith(f"{invoice_id}."):
+                file_url = f"/uploads/{f.name}"
+                break
+    d["file_url"] = file_url
     return d
+
 
 
 @app.delete("/api/history")
@@ -807,3 +904,9 @@ async def serve_frontend():
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Serve uploaded invoice files
+uploads_dir = Path(__file__).parent / "uploads"
+uploads_dir.mkdir(exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+

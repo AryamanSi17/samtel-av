@@ -102,7 +102,9 @@
     .panel {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
+      min-width: 0;
     }
+
     .panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
     .panel-num {
       width: 22px; height: 22px; border-radius: 5px;
@@ -191,8 +193,11 @@
       display: none; margin-top: 12px; padding: 10px 14px;
       border: 1px solid var(--border); background: var(--surface2);
       border-radius: var(--radius-sm); gap: 10px; align-items: center;
+      cursor: pointer; transition: all .15s ease;
     }
+    .file-info:hover { border-color: var(--red); background: var(--surface3); }
     .file-info.visible { display: flex; }
+
     .file-icon-sm {
       width: 30px; height: 30px; border-radius: 7px;
       background: var(--red-dim); border: 1px solid var(--red);
@@ -230,6 +235,22 @@
     .type-badge {
       font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px;
       background: var(--red-dim); border: 1px solid var(--red); color: var(--red); letter-spacing: .3px;
+    }
+    .ocr-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px;
+      letter-spacing: .3px; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .ocr-native {
+      background: var(--success-bg); border: 1px solid var(--success); color: var(--success);
+    }
+    .ocr-tesseract {
+      background: var(--warn-bg); border: 1px solid var(--warn); color: var(--warn);
+    }
+    [data-theme="light"] .ocr-vlm {
+      background: rgba(109, 40, 217, 0.08); border: 1px solid #6d28d9; color: #6d28d9;
+    }
+    [data-theme="dark"] .ocr-vlm {
+      background: rgba(139, 92, 246, 0.12); border: 1px solid #a78bfa; color: #c084fc;
     }
     .dup-badge {
       font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px;
@@ -414,27 +435,56 @@
     .modal-body { flex: 1; overflow-y: auto; padding: 22px; }
 
     /* ══ ANALYTICS TAB ══ */
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 26px; }
     .stat-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px 22px;
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface2) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 24px;
+      position: relative; overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease;
     }
-    .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); }
-    .stat-value { font-size: 32px; font-weight: 700; margin-top: 6px; color: var(--text); }
-    .stat-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--border-hover) 0%, transparent 100%);
+      opacity: 0.4; transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(204, 31, 31, 0.25);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 0 0 1px 1px rgba(204, 31, 31, 0.12);
+    }
+    .stat-card:hover::before {
+      opacity: 1;
+      background: linear-gradient(90deg, var(--red) 0%, transparent 100%);
+    }
+    .stat-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-sub); }
+    .stat-value { font-size: 36px; font-weight: 700; margin-top: 4px; color: var(--text); letter-spacing: -1px; }
+    .stat-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; font-weight: 400; }
     .stat-card.accent .stat-value { color: var(--red); }
+    .stat-card.accent::before {
+      background: linear-gradient(90deg, var(--red) 0%, transparent 100%);
+      opacity: 0.7;
+    }
 
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     @media (max-width: 820px) { .charts-grid { grid-template-columns: 1fr; } }
     .chart-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 22px;
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface2) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease;
+    }
+    .chart-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(204, 31, 31, 0.15);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
     }
     .chart-card.wide { grid-column: span 2; }
     @media (max-width: 820px) { .chart-card.wide { grid-column: span 1; } }
-    .chart-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-bottom: 18px; }
+    .chart-title { font-size: 12.5px; font-weight: 600; color: var(--text-sub); margin-bottom: 20px; letter-spacing: .3px; }
     .chart-wrap  { position: relative; height: 220px; }
     .chart-wrap-tall { position: relative; height: 280px; }
+
 
     /* ── Footer ── */
     footer {
@@ -509,7 +559,7 @@
         <div class="drop-title">Drop your invoice here</div>
       </div>
 
-      <div class="file-info" id="file-info">
+      <div class="file-info" id="file-info" title="Click to view/preview PDF">
         <div class="file-icon-sm">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -554,8 +604,15 @@
         <div id="invoice-type-row">
           <span class="type-label">Detected type</span>
           <span class="type-badge" id="invoice-type-badge">—</span>
+          <span id="ocr-method-badge" class="ocr-badge" style="display:none">—</span>
           <span id="dup-warning-badge" style="display:none"></span>
           <span style="flex:1"></span>
+          <a id="view-file-btn" style="display:none" class="btn-ghost" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            View PDF
+          </a>
           <a id="excel-dl-btn" style="display:none" class="btn-ghost">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>
@@ -564,6 +621,7 @@
             Excel
           </a>
         </div>
+
 
         <div class="json-toolbar">
           <span class="json-label">
@@ -750,11 +808,18 @@
         <button id="mvt-table" class="active" onclick="setModalView('table')">Table</button>
         <button id="mvt-json"  onclick="setModalView('json')">JSON</button>
       </div>
+      <a id="modal-view-file-btn" class="btn-ghost" style="display:none;text-decoration:none" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        View Original
+      </a>
       <a id="modal-excel-btn" class="btn-ghost" style="text-decoration:none">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Excel
       </a>
       <button class="modal-close" onclick="closeModal()">×</button>
+
     </div>
     <div class="modal-body" id="modal-body"></div>
   </div>
@@ -861,7 +926,15 @@ function setFile(file) {
   statusEl.innerHTML = ''; statusEl.className = 'status-msg';
 }
 
+fileInfo.addEventListener('click', () => {
+  if (_selectedFile) {
+    const url = URL.createObjectURL(_selectedFile);
+    window.open(url, '_blank');
+  }
+});
+
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
 dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
@@ -884,6 +957,22 @@ function renderResults(data, rawPreview, elapsed) {
 
   document.getElementById('invoice-type-badge').textContent = TYPE_LABELS[type] || type;
 
+  const ocrBadge = document.getElementById('ocr-method-badge');
+  if (data.ocr_method) {
+    ocrBadge.style.display = 'inline-flex';
+    ocrBadge.textContent = data.ocr_method;
+    ocrBadge.className = 'ocr-badge';
+    if (data.ocr_method.includes('VLM')) {
+      ocrBadge.classList.add('ocr-vlm');
+    } else if (data.ocr_method.includes('Tesseract') || data.ocr_method.includes('OCR')) {
+      ocrBadge.classList.add('ocr-tesseract');
+    } else {
+      ocrBadge.classList.add('ocr-native');
+    }
+  } else {
+    ocrBadge.style.display = 'none';
+  }
+
   const dupBadge = document.getElementById('dup-warning-badge');
   if (data.duplicate_warning) {
     dupBadge.style.display = 'flex';
@@ -897,6 +986,15 @@ function renderResults(data, rawPreview, elapsed) {
   const exBtn = document.getElementById('excel-dl-btn');
   if (_lastId) { exBtn.href = `/api/history/${_lastId}/excel`; exBtn.style.display = 'flex'; }
   else { exBtn.style.display = 'none'; }
+
+  const viewFileBtn = document.getElementById('view-file-btn');
+  if (data.file_url) {
+    viewFileBtn.href = data.file_url;
+    viewFileBtn.style.display = 'flex';
+  } else {
+    viewFileBtn.style.display = 'none';
+  }
+
 
   document.getElementById('json-output').innerHTML    = syntaxHighlight(d);
   document.getElementById('table-output').innerHTML   = `<table class="data-table"><tbody>${buildTable(d)}</tbody></table>`;
@@ -1004,7 +1102,7 @@ function buildQueueItemHTML(f, i, st) {
     : `<svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg>`;
   const sub = st === 'pending'    ? 'Waiting…'
             : st === 'processing' ? 'Processing…'
-            : st.type  ? (TYPE_LABELS[st.type] || st.type)
+            : st.type  ? (TYPE_LABELS[st.type] || st.type) + (st.ocr_method ? ` — ${st.ocr_method}` : '')
             : st.error ? `Error: ${escHtml(st.error)}`
             : '';
   const timeTag = st.elapsed
@@ -1092,7 +1190,7 @@ batchBtn.addEventListener('click', async () => {
         const elapsed = ((Date.now() - _batchStartTimes[i]) / 1000).toFixed(1);
         const json    = await res.json();
         statuses[i] = res.ok
-          ? { type: json.invoice_type, id: json.id, dup: !!json.duplicate_warning, elapsed }
+          ? { type: json.invoice_type, id: json.id, dup: !!json.duplicate_warning, elapsed, ocr_method: json.ocr_method }
           : { error: json.detail || 'Failed', elapsed };
       } catch(e) {
         statuses[i] = { error: e.message, elapsed: ((Date.now() - _batchStartTimes[i]) / 1000).toFixed(1) };
@@ -1193,10 +1291,22 @@ async function showModal(id) {
   document.getElementById('modal-view-toggle').style.display = 'none';
   document.getElementById('modal-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div class="spinner" style="margin:0 auto"></div></div>';
   document.getElementById('modal-excel-btn').href = `/api/history/${id}/excel`;
+  
+  const modalViewFileBtn = document.getElementById('modal-view-file-btn');
+  modalViewFileBtn.style.display = 'none';
+  
   try {
     const res  = await fetch(`/api/history/${id}`);
     const data = await res.json();
     _modalData = data.invoice_data || {};
+    
+    if (data.file_url) {
+      modalViewFileBtn.href = data.file_url;
+      modalViewFileBtn.style.display = 'flex';
+    } else {
+      modalViewFileBtn.style.display = 'none';
+    }
+
     document.getElementById('modal-title').textContent = `${TYPE_LABELS[data.invoice_type]||data.invoice_type} — ${data.filename}`;
     document.getElementById('modal-view-toggle').style.display = 'flex';
     document.getElementById('mvt-table').classList.add('active');
@@ -1245,20 +1355,26 @@ async function loadAnalytics() {
         type: 'doughnut',
         data: {
           labels: data.by_type.map(d => TYPE_LABELS[d.type]||d.type),
-          datasets: [{ data: data.by_type.map(d=>d.count), backgroundColor: chartColors(data.by_type.length), borderWidth: 2, borderColor: isDark?'#111':'#fff' }]
+          datasets: [{ data: data.by_type.map(d=>d.count), backgroundColor: chartColors(data.by_type.length), borderWidth: 1.5, borderColor: isDark?'#111':'#fff' }]
         },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color:textColor, font:{family:'Poppins',size:11}, padding:12 } } } }
+        options: { responsive:true, maintainAspectRatio:false, cutout: '75%', plugins:{ legend:{ position:'right', labels:{ color:textColor, font:{family:'Poppins',size:11,weight:'500'}, padding:14 } } } }
       });
     }
 
     // Vendors bar
     destroyChart('vendors');
     if (data.top_vendors.length) {
-      _charts['vendors'] = new Chart(document.getElementById('chart-vendors'), {
+      const vCanvas = document.getElementById('chart-vendors');
+      const vCtx = vCanvas.getContext('2d');
+      const vGrad = vCtx.createLinearGradient(0, 0, vCanvas.offsetWidth || 400, 0);
+      vGrad.addColorStop(0, '#cc1f1f');
+      vGrad.addColorStop(1, 'rgba(204, 31, 31, 0.15)');
+
+      _charts['vendors'] = new Chart(vCanvas, {
         type: 'bar',
         data: {
           labels: data.top_vendors.map(d => d.name.length > 18 ? d.name.slice(0,18)+'…' : d.name),
-          datasets: [{ data: data.top_vendors.map(d=>d.count), backgroundColor: '#cc1f1f', borderRadius: 4 }]
+          datasets: [{ data: data.top_vendors.map(d=>d.count), backgroundColor: vGrad, borderRadius: 5 }]
         },
         options: {
           indexAxis:'y', responsive:true, maintainAspectRatio:false,
@@ -1274,14 +1390,21 @@ async function loadAnalytics() {
     // Daily line
     destroyChart('daily');
     if (data.daily.length) {
-      _charts['daily'] = new Chart(document.getElementById('chart-daily'), {
+      const dCanvas = document.getElementById('chart-daily');
+      const dCtx = dCanvas.getContext('2d');
+      const dGrad = dCtx.createLinearGradient(0, 0, 0, dCanvas.offsetHeight || 250);
+      dGrad.addColorStop(0, 'rgba(204, 31, 31, 0.35)');
+      dGrad.addColorStop(1, 'rgba(204, 31, 31, 0.00)');
+
+      _charts['daily'] = new Chart(dCanvas, {
         type: 'line',
         data: {
           labels: data.daily.map(d=>d.date),
           datasets: [{
             data: data.daily.map(d=>d.count),
-            borderColor: '#cc1f1f', backgroundColor: 'rgba(204,31,31,0.1)',
-            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor:'#cc1f1f'
+            borderColor: '#cc1f1f', borderWidth: 3, backgroundColor: dGrad,
+            tension: 0.4, fill: true, pointRadius: 4, pointHoverRadius: 6,
+            pointBackgroundColor:'#cc1f1f', pointBorderColor: isDark?'#111':'#fff', pointBorderWidth: 2
           }]
         },
         options: {

@@ -255,7 +255,7 @@ def main():
 
         try:
             with open(path, "rb") as f:
-                raw = extract_text_from_pdf(f.read())
+                raw, _ = extract_text_from_pdf(f.read())
 
             invoice_type = _retry_llm(classify_invoice, raw)
             extracted    = _retry_llm(extract_invoice_data, invoice_type, raw)
