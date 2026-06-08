@@ -549,7 +549,7 @@ def _keyword_classify(text: str) -> str | None:
     if re.search(r'\b998[0-9]\d\d\b', t):
         return "SERVICES"
 
-    if "REIMBURSEMENT" in t and ("EMPLOYEE" in t or "SAP NO" in t or "DEPARTMENT" in t):
+    if ("REIMBURSEMENT" in t or "T.A. BILL" in t or "TA BILL" in t or "TRAVEL ALLOWANCE" in t) and ("EMPLOYEE" in t or "SAP" in t or "DEPARTMENT" in t or "VOUCHER" in t):
         return "EMPLOYEE_REIMBURSEMENT"
 
     if re.search(r'IEC\s*(NO|CODE|NUMBER)?[\s:]*\d', t):
@@ -590,6 +590,53 @@ def extract_invoice_data(invoice_type: str, raw_text: str) -> dict:
     return _parse_json(content)
 
 
+def _extract_with_openai_vlm_direct(file_bytes: bytes, is_pdf: bool, invoice_type: str) -> dict:
+    page_images = []
+    if is_pdf:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        for page in doc:
+            pix = page.get_pixmap(dpi=150)
+            png_bytes = pix.tobytes("png")
+            page_images.append(png_bytes)
+        doc.close()
+    else:
+        page_images.append(file_bytes)
+
+    if not page_images:
+        raise ValueError("No pages found in file")
+
+    content_list = [{"type": "text", "text": PROMPTS[invoice_type]}]
+    for img_bytes in page_images:
+        try:
+            img = Image.open(io.BytesIO(img_bytes))
+            fmt = (img.format or "PNG").lower()
+            mime = f"image/{fmt}"
+        except Exception:
+            mime = "image/png"
+        
+        b64_img = base64.b64encode(img_bytes).decode("utf-8")
+        content_list.append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:{mime};base64,{b64_img}"
+            }
+        })
+
+    resp = openai_client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "user",
+                "content": content_list
+            }
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.0,
+    )
+    result = resp.choices[0].message.content.strip()
+    return _parse_json(result)
+
+
 # ── Core processing helper ─────────────────────────────────────────────────────
 
 def _process_file_sync(file_bytes: bytes, filename: str, content_type: str) -> dict:
@@ -602,7 +649,17 @@ def _process_file_sync(file_bytes: bytes, filename: str, content_type: str) -> d
         raise ValueError("Could not extract readable text. Ensure the file is not a low-resolution scan.")
 
     invoice_type  = classify_invoice(raw_text)
-    invoice_data  = extract_invoice_data(invoice_type, raw_text)
+    
+    # Direct VLM visual extraction ONLY for scanned EMPLOYEE_REIMBURSEMENT documents/images
+    if invoice_type == "EMPLOYEE_REIMBURSEMENT" and ocr_method in ("Scanned (VLM)", "Scanned (OCR)") and openai_client:
+        try:
+            invoice_data = _extract_with_openai_vlm_direct(file_bytes, content_type == "application/pdf", invoice_type)
+            ocr_method = f"{ocr_method} + Direct VLM"
+        except Exception as e:
+            print(f"Direct VLM extraction failed, falling back to Llama: {e}")
+            invoice_data = extract_invoice_data(invoice_type, raw_text)
+    else:
+        invoice_data = extract_invoice_data(invoice_type, raw_text)
 
     inv_num = invoice_data.get("invoice_number")
     dup     = _check_duplicate(str(inv_num or ""), invoice_type)

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Samtel Avionics — Presentation Deck</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Dark Theme (Default) */
+      --bg: #050505;
+      --surface: #111111;
+      --border: #222222;
+      --red: #cc1f1f;
+      --red-glow: rgba(204, 31, 31, 0.4);
+      --text: #f5f5f5;
+      --text-sub: #a0a0a0;
+      --text-muted: #555555;
+      --success: #4ade80;
+      --dot: rgba(255, 255, 255, 0.015);
+      
+      --slide-bg: linear-gradient(135deg, #0d0d0d 0%, #151515 100%);
+      --title-gradient: linear-gradient(180deg, #ffffff 0%, #cccccc 100%);
+      --card-bg: rgba(255, 255, 255, 0.02);
+      --card-hover: rgba(255, 255, 255, 0.04);
+      --notes-bg: #0c0c0c;
+    }
+
+    body[data-theme="light"] {
+      /* Light Theme */
+      --bg: #f3f3f3;
+      --surface: #ffffff;
+      --border: #dcdcdc;
+      --red: #cc1f1f;
+      --red-glow: rgba(204, 31, 31, 0.12);
+      --text: #1a1a1a;
+      --text-sub: #555555;
+      --text-muted: #999999;
+      --success: #16a34a;
+      --dot: rgba(0, 0, 0, 0.03);
+
+      --slide-bg: linear-gradient(135deg, #ffffff 0%, #f7f7f7 100%);
+      --title-gradient: linear-gradient(180deg, #111111 0%, #444444 100%);
+      --card-bg: rgba(0, 0, 0, 0.02);
+      --card-hover: rgba(0, 0, 0, 0.04);
+      --notes-bg: #fcfcfc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
+      background-size: 32px 32px;
+      transition: background-color .3s, color .3s;
+    }
+
+    /* ── Presentation Canvas ── */
+    .deck-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+    }
+
+    .slide-wrapper {
+      width: 100%;
+      max-width: 1100px;
+      aspect-ratio: 16 / 9;
+      background: var(--slide-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 1px 1px rgba(255,255,255,0.03);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .3s, border-color .3s;
+    }
+
+    /* ── Slide Styling ── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 60px 80px;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.98) translateY(10px);
+      transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+    }
+
+    .slide-content-center {
+      text-align: center;
+      align-items: center;
+    }
+
+    /* SVG Logo styling */
+    .samtel-logo {
+      height: 36px;
+      width: auto;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .slide-logo-watermark {
+      position: absolute;
+      top: 30px;
+      left: 45px;
+      height: 30px;
+      width: auto;
+      opacity: 0.85;
+      z-index: 10;
+      transition: opacity 0.3s;
+    }
+
+    /* Hide watermark on slide 1 and slide 8 (splash pages) */
+    .watermark-hidden .slide-logo-watermark {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Typography & Visual Accents */
+    .eyebrow {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--red);
+      margin-bottom: 15px;
+    }
+
+    .title-large {
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      background: var(--title-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+    }
+
+    .title-red {
+      background: linear-gradient(180deg, #ff4d4d 0%, #b30000 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .desc-large {
+      font-size: 20px;
+      color: var(--text-sub);
+      font-weight: 300;
+      max-width: 700px;
+      line-height: 1.6;
+    }
+
+    .stat-giant {
+      font-size: 140px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -5px;
+      color: var(--red);
+      text-shadow: 0 0 40px rgba(204, 31, 31, 0.25);
+      margin-bottom: 10px;
+      animation: pulseGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { text-shadow: 0 0 30px rgba(204, 31, 31, 0.15); }
+      50% { text-shadow: 0 0 50px rgba(204, 31, 31, 0.35); }
+    }
+
+    /* Grid Layout for Features / Comparisons */
+    .slide-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 30px;
+      width: 100%;
+    }
+
+    .grid-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 30px 24px;
+      border-radius: 12px;
+      text-align: center;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .grid-card:hover {
+      background: var(--card-hover);
+      border-color: rgba(204, 31, 31, 0.2);
+    }
+
+    .card-num {
+      width: 44px;
+      height: 44px;
+      background: var(--red-glow);
+      border: 1.5px solid var(--red);
+      color: var(--red);
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+    }
+    
+    body[data-theme="dark"] .card-num {
+      color: #fff;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    /* Comparison columns */
+    .compare-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .compare-box {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      background: var(--card-bg);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .compare-box.highlight {
+      border-color: var(--red);
+      background: linear-gradient(180deg, var(--red-glow) 0%, transparent 100%);
+    }
+
+    .compare-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    .compare-val {
+      font-size: 38px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .compare-box.highlight .compare-val {
+      color: var(--success);
+    }
+
+    .compare-desc {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+
+    /* List layout */
+    .list-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+      max-width: 600px;
+    }
+
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      color: var(--text-sub);
+    }
+
+    .list-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--red);
+      border-radius: 50%;
+    }
+
+    /* ── Controls & HUD ── */
+    .hud-bar {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      z-index: 10;
+      transition: background-color .3s, border-color .3s;
+    }
+
+    .nav-btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: var(--card-hover);
+    }
+
+    .nav-btn.primary {
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+    }
+
+    .nav-btn.primary:hover {
+      opacity: 0.9;
+    }
+
+    .slide-indicator {
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    /* ── Presenter Speaker Notes Drawer ── */
+    .notes-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notes-drawer {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 400px;
+      background: var(--notes-bg);
+      border-left: 1px solid var(--border);
+      z-index: 100;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), background-color .3s, border-color .3s;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.4);
+    }
+
+    .notes-drawer.open {
+      transform: translateX(0);
+    }
+
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .notes-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--red);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    .notes-body {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text-sub);
+    }
+
+    .notes-body p {
+      margin-bottom: 16px;
+    }
+
+    .notes-body strong {
+      color: var(--text);
+    }
+
+    .action-tip {
+      background: var(--red-glow);
+      border-left: 3px solid var(--red);
+      padding: 12px 16px;
+      font-size: 12.5px;
+      color: var(--text-sub);
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 18px;
+    }
+
+    /* Widescreen visual preview frame */
+    .ui-preview-mockup {
+      width: 80%;
+      height: 60%;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 8px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transition: background-color .3s, border-color .3s;
+    }
+
+    .mockup-header {
+      height: 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 6px;
+      transition: background-color .3s, border-color .3s;
+    }
+
+    .mockup-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .mockup-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .mock-pane {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: background-color .3s, border-color .3s;
+    }
+  </style>
+</head>
+<body data-theme="light" class="watermark-hidden">
+
+  <!-- Slide Canvas -->
+  <div class="deck-container">
+    <div class="slide-wrapper">
+      
+      <!-- Logo Watermark on corner -->
+      <div class="slide-logo-watermark">
+        <svg class="samtel-logo" xmlns="http://www.w3.org/2000/svg" viewBox="17.02 37.13 490.98 388.26">
+          <path d="M 360.686 389.138 C 355.607 390.280, 350.228 394.518, 348.447 398.781 C 346.532 403.363, 346.609 411.443, 348.611 415.979 C 349.590 418.199, 351.844 420.633, 354.361 422.188 C 367.500 430.308, 383 422.112, 383 407.045 C 383 395.126, 372.288 386.529, 360.686 389.138 M 461.039 389.184 C 452.228 391.686, 447.140 399.679, 448.226 409.314 C 448.929 415.549, 450.926 419.010, 455.790 422.424 C 459.294 424.884, 461.037 425.421, 465.315 425.359 C 473.340 425.243, 480.223 420.823, 477.156 417.756 C 476.344 416.944, 475.508 417.135, 474.034 418.469 C 471.606 420.667, 463.574 421.591, 459.750 420.113 C 455.589 418.504, 453.008 413.479, 453.004 406.978 C 453.001 402.314, 453.467 400.890, 456 397.816 C 459.866 393.126, 465.342 391.949, 471.136 394.561 C 474.085 395.891, 475.352 396.048, 476.210 395.190 C 477.838 393.562, 474.644 390.284, 470.646 389.482 C 468.916 389.135, 466.825 388.705, 466 388.526 C 465.175 388.347, 462.942 388.643, 461.039 389.184 M 494.117 389.086 C 486.643 390.667, 483.296 400.112, 488.484 404.985 C 489.850 406.268, 493.312 408.143, 496.177 409.153 C 499.043 410.162, 501.806 411.406, 502.319 411.919 C 503.895 413.495, 503.350 418.271, 501.434 419.672 C 499.188 421.314, 493.947 421.389, 490.520 419.827 C 488.606 418.955, 487.656 418.944, 486.815 419.785 C 483.789 422.811, 492.715 426.557, 499.347 425.045 C 505.084 423.736, 508 420.524, 508 415.514 C 508 410.310, 505.718 407.731, 499.196 405.565 C 496.496 404.668, 493.248 402.829, 491.979 401.477 C 490.016 399.388, 489.838 398.652, 490.789 396.564 C 492.198 393.471, 497.725 392.229, 502.072 394.030 C 504.365 394.980, 505.394 395.006, 506.263 394.137 C 509.099 391.301, 500.519 387.732, 494.117 389.086 M 33.374 389.985 C 30.172 391.278, 27 396.376, 27 400.230 C 27 404.431, 29.383 406.773, 37.250 410.307 C 42.961 412.872, 44.101 414.499, 41.800 416.800 C 40.307 418.293, 35.535 418.357, 32.851 416.920 C 31.269 416.074, 30.420 416.215, 28.917 417.575 C 24.300 421.754, 28.258 425, 37.970 425 C 45.076 425, 49.387 422.080, 50.422 416.566 C 51.665 409.941, 50.420 408.064, 42.297 404.311 C 34.681 400.792, 33.486 398.983, 37.225 396.628 C 38.481 395.837, 39.824 395.873, 42.173 396.759 C 45.048 397.844, 45.646 397.742, 47.698 395.814 C 50.693 393, 50.611 391.183, 47.435 389.975 C 44.332 388.796, 36.306 388.801, 33.374 389.985 M 72.887 389.745 C 71.961 389.945, 69.658 393.796, 67.474 398.797 C 65.383 403.584, 62.172 410.826, 60.337 414.891 C 56.108 424.258, 56.118 425, 60.474 425 C 63.386 425, 64.218 424.474, 65.614 421.750 C 67.852 417.383, 68.569 417.033, 75.330 417.015 L 81.161 417 82.732 421 C 84.186 424.702, 84.591 425, 88.152 425 C 90.268 425, 92 424.532, 92 423.959 C 92 422.842, 84.473 404.281, 80.481 395.553 C 78.137 390.428, 76.284 389.011, 72.887 389.745 M 101.727 389.694 C 100.102 390.117, 99.976 391.595, 100.227 407.328 L 100.500 424.500 102.865 424.835 C 106.515 425.351, 107.231 423.810, 107.521 414.824 C 107.668 410.246, 107.856 405.375, 107.938 404 C 108.028 402.487, 109.748 406.041, 112.293 413 C 116.300 423.952, 116.634 424.500, 119.319 424.500 C 121.828 424.500, 122.357 423.895, 124.128 419 C 125.222 415.975, 127.182 410.575, 128.482 407 L 130.847 400.500 131.173 412.500 L 131.500 424.500 135 424.500 L 138.500 424.500 138.773 407.335 L 139.047 390.169 136.023 389.505 C 134.360 389.140, 131.701 389.126, 130.114 389.475 C 127.695 390.006, 126.886 391.047, 125.114 395.907 C 123.951 399.096, 122.981 402.334, 122.958 403.103 C 122.935 403.871, 122.094 406.043, 121.089 407.930 C 119.409 411.085, 119.182 411.205, 118.250 409.430 C 117.693 408.368, 116.902 405.943, 116.493 404.040 C 115.380 398.865, 112.128 391.666, 110.264 390.250 C 108.640 389.017, 105.189 388.792, 101.727 389.694 M 147.250 389.648 C 146.563 389.933, 146 391.455, 146 393.029 C 146 395.733, 146.261 395.907, 150.750 396.195 L 155.500 396.500 155.745 408.500 C 156.055 423.636, 156.362 425, 159.460 425 C 160.792 425, 162.246 424.438, 162.691 423.750 C 163.136 423.063, 163.500 416.650, 163.500 409.500 L 163.500 396.500 168.500 396 C 173.278 395.522, 173.500 395.367, 173.500 392.500 L 173.500 389.500 161 389.314 C 154.125 389.212, 147.938 389.362, 147.250 389.648 M 181.667 390.718 C 180.828 393.778, 180.980 422.432, 181.842 423.784 C 182.448 424.736, 185.618 424.995, 194.080 424.784 L 205.500 424.500 205.811 421.284 C 206.185 417.410, 204.554 416.765, 195.500 417.207 L 189.500 417.500 189.190 414.295 L 188.880 411.090 196.190 410.795 L 203.500 410.500 203.500 407 L 203.500 403.500 196.250 403.206 C 189.015 402.913, 189 402.906, 189 400.063 C 189 396.628, 190.298 396.021, 196.309 396.648 C 202.291 397.271, 205.220 395.732, 204.810 392.183 L 204.500 389.500 193.328 389.218 C 183.321 388.965, 182.104 389.122, 181.667 390.718 M 217.225 389.819 C 216.256 390.450, 216.016 394.712, 216.225 407.574 L 216.500 424.500 226.500 424.500 L 236.500 424.500 236.500 421 L 236.500 417.500 230 417.500 L 223.500 417.500 223 403.500 C 222.534 390.444, 222.365 389.483, 220.500 389.244 C 219.400 389.104, 217.926 389.362, 217.225 389.819 M 273.977 392.250 C 272.881 394.038, 271.120 397.750, 270.063 400.500 C 269.005 403.250, 267.220 407.368, 266.094 409.652 C 262.706 416.526, 260.077 423.743, 260.724 424.391 C 262.302 425.969, 264.214 424.614, 266.212 420.500 L 268.399 416 276.712 416 L 285.026 416 287.212 420.500 C 288.674 423.508, 290.034 425, 291.316 425 C 294.110 425, 294.043 424.776, 284.020 400.527 C 278.782 387.855, 277.381 386.700, 273.977 392.250 M 295.489 390.176 C 295.211 390.904, 295.925 393.975, 297.075 397 C 298.225 400.025, 300.444 405.875, 302.005 410 C 307.046 423.319, 307.927 425, 309.862 425 C 311.847 425, 312.346 424.020, 319.034 407 C 325.651 390.158, 325.400 391, 324.187 389.787 C 322.532 388.132, 320.398 390.359, 318.395 395.829 C 313.029 410.482, 310.781 416, 310.177 415.996 C 309.805 415.994, 308.150 412.352, 306.500 407.902 C 300.428 391.528, 299.491 389.526, 297.743 389.189 C 296.781 389.004, 295.767 389.448, 295.489 390.176 M 332.528 390.176 C 332.272 390.904, 332.160 398.925, 332.281 408 C 332.490 423.760, 332.590 424.500, 334.500 424.500 C 336.424 424.500, 336.500 423.833, 336.500 407.014 C 336.500 391.144, 336.338 389.496, 334.747 389.190 C 333.783 389.004, 332.784 389.448, 332.528 390.176 M 393 407.073 C 393 423.747, 393.136 425.121, 394.750 424.812 C 396.287 424.518, 396.561 422.786, 397 410.574 L 397.500 396.671 403.902 406.086 C 415.723 423.467, 416.994 425, 419.585 425 L 422 425 422 407.559 C 422 396.078, 421.628 389.888, 420.913 389.446 C 418.446 387.921, 417.723 391.241, 417.756 403.939 C 417.775 411.123, 417.460 417, 417.056 417 C 416.652 417, 415.787 415.988, 415.134 414.750 C 414.481 413.512, 411.946 409.800, 409.500 406.500 C 407.055 403.200, 404.181 398.925, 403.114 397 C 400.381 392.069, 397.253 389, 394.961 389 C 393.085 389, 393 389.786, 393 407.073 M 434.688 389.646 C 434.309 390.024, 434 398.166, 434 407.740 C 434 423.779, 434.137 425.120, 435.750 424.810 C 437.337 424.504, 437.500 422.849, 437.500 407.070 C 437.500 390.670, 436.967 387.367, 434.688 389.646 M 360.500 393.711 C 359.400 393.975, 357.042 395.581, 355.260 397.281 C 349.597 402.684, 349.661 411.377, 355.408 417.471 C 358.292 420.529, 359.358 421, 363.400 421 C 370.314 421, 374.623 418.837, 376.458 414.446 C 381.763 401.751, 373.228 390.661, 360.500 393.711 M 275.180 399.758 C 274.454 401.266, 272.998 404.637, 271.945 407.250 L 270.029 412 C 270.029 412, 276.515 412, 276.515 412 C 281.397 412, 283 411.655, 283 410.605 C 283 408.957, 277.728 397.017, 277 397.016 C 276.725 397.016, 275.906 398.250, 275.180 399.758 M 72.616 404.447 C 70.517 409.382, 71.136 411.232, 74.744 410.817 C 77.758 410.470, 77.903 409.144, 75.547 403.500 L 74.295 400.500 72.616 404.447" stroke="none" fill="currentColor" fill-rule="evenodd"/>
+          <path d="M 116.500 41.080 C 70.345 45.779, 38.702 69.013, 27.406 106.500 C 24.998 114.488, 24.692 117.130, 24.682 130 C 24.672 143.013, 24.943 145.328, 27.325 152.578 C 35.498 177.457, 54.732 192.541, 94.087 204.932 C 118.642 212.664, 128.437 216.266, 135.500 220.159 C 144.623 225.189, 148.228 228.417, 151.401 234.399 C 156.125 243.303, 154.303 255.827, 147.191 263.344 C 144.031 266.685, 135.563 271.100, 128.500 273.091 C 120.890 275.236, 100.911 274.957, 94 272.609 C 81.782 268.459, 73.671 263.719, 66 256.244 L 58.500 248.937 56.657 251.219 C 54.536 253.844, 43.232 266.251, 27.767 282.927 C 21.864 289.292, 17.026 295.217, 17.017 296.093 C 17.017 296.093, 17.026 295.217, 17.026 295.217 L 17.026 295.217 C 17.008 296.970, 19.137 299.476, 21.750 301.662 C 39.007 316.104, 61.099 325.917, 83.719 329.187 C 95.871 330.944, 123.127 330.677, 135.741 328.678 C 167.240 323.687, 192.581 307.108, 205.228 283.217 C 215.790 263.267, 218.493 235.668, 211.905 215.050 C 209.359 207.082, 207.727 203.883, 202.949 197.500 C 191.767 182.560, 176.681 173.167, 150.658 164.943 C 118.012 154.626, 112.140 152.592, 105.822 149.410 C 97.528 145.233, 92.398 140.830, 90.322 136.105 C 88.403 131.737, 88.108 120.806, 89.778 115.992 C 94.391 102.697, 119.464 93.210, 139.241 97.276 C 152.182 99.937, 161.499 103.917, 167.270 109.250 C 170.097 111.862, 172.656 114, 172.957 114 C 174.198 114, 214 70.271, 214 68.907 C 214 67.976, 201.809 59.088, 196 55.783 C 183.165 48.482, 166.383 43.585, 147 41.484 C 132.340 39.896, 128.622 39.846, 116.500 41.080 M 380.313 38.250 C 379.870 38.938, 377.305 44.450, 374.612 50.500 C 366.722 68.226, 365.999 64.327, 386.255 113.299 C 411.016 173.165, 423 202.493, 423 203.226 C 423 203.575, 424.375 206.831, 426.056 210.462 C 429.587 218.091, 432 224.653, 432 226.626 C 432 227.777, 421.271 228.002, 365.750 228.015 C 329.313 228.024, 298.909 228.405, 298.187 228.863 C 295.920 230.301, 287.017 251.888, 288.338 252.745 C 288.977 253.160, 322.800 253.501, 363.500 253.502 C 404.200 253.503, 438.928 253.616, 440.674 253.752 C 443.717 253.990, 444.015 254.423, 447.894 264.250 C 450.118 269.887, 453.346 277.875, 455.065 282 C 459.987 293.810, 466.968 310.895, 469.774 318 C 474.400 329.716, 473.112 329, 489.556 329 C 497.435 329, 504.098 328.650, 504.362 328.223 C 504.782 327.544, 496.231 305.753, 491.716 296 C 490.825 294.075, 487.763 286.875, 484.913 280 C 472.778 250.738, 470.859 246.176, 459.143 218.758 C 455.208 209.550, 450.897 199.200, 449.563 195.758 C 448.228 192.316, 445.252 185.225, 442.948 180 C 437.916 168.587, 430.409 150.792, 409.623 101 C 401.013 80.375, 392.655 60.575, 391.051 57 C 389.447 53.425, 386.931 47.462, 385.461 43.750 C 382.776 36.972, 381.805 35.934, 380.313 38.250" stroke="none" fill="var(--red)" fill-rule="evenodd"/>
+        </svg>
+      </div>
+
+      <!-- Slide 1: Vision -->
+      <div class="slide active slide-content-center" id="slide-1">
+        <div style="margin-bottom: 24px;">
+          <svg style="height: 100px; width: auto;" xmlns="http://www.w3.org/2000/svg" viewBox="17.02 37.13 490.98 388.26">
+            <path d="M 360.686 389.138 C 355.607 390.280, 350.228 394.518, 348.447 398.781 C 346.532 403.363, 346.609 411.443, 348.611 415.979 C 349.590 418.199, 351.844 420.633, 354.361 422.188 C 367.500 430.308, 383 422.112, 383 407.045 C 383 395.126, 372.288 386.529, 360.686 389.138 M 461.039 389.184 C 452.228 391.686, 447.140 399.679, 448.226 409.314 C 448.929 415.549, 450.926 419.010, 455.790 422.424 C 459.294 424.884, 461.037 425.421, 465.315 425.359 C 473.340 425.243, 480.223 420.823, 477.156 417.756 C 476.344 416.944, 475.508 417.135, 474.034 418.469 C 471.606 420.667, 463.574 421.591, 459.750 420.113 C 455.589 418.504, 453.008 413.479, 453.004 406.978 C 453.001 402.314, 453.467 400.890, 456 397.816 C 459.866 393.126, 465.342 391.949, 471.136 394.561 C 474.085 395.891, 475.352 396.048, 476.210 395.190 C 477.838 393.562, 474.644 390.284, 470.646 389.482 C 468.916 389.135, 466.825 388.705, 466 388.526 C 465.175 388.347, 462.942 388.643, 461.039 389.184 M 494.117 389.086 C 486.643 390.667, 483.296 400.112, 488.484 404.985 C 489.850 406.268, 493.312 408.143, 496.177 409.153 C 499.043 410.162, 501.806 411.406, 502.319 411.919 C 503.895 413.495, 503.350 418.271, 501.434 419.672 C 499.188 421.314, 493.947 421.389, 490.520 419.827 C 488.606 418.955, 487.656 418.944, 486.815 419.785 C 483.789 422.811, 492.715 426.557, 499.347 425.045 C 505.084 423.736, 508 420.524, 508 415.514 C 508 410.310, 505.718 407.731, 499.196 405.565 C 496.496 404.668, 493.248 402.829, 491.979 401.477 C 490.016 399.388, 489.838 398.652, 490.789 396.564 C 492.198 393.471, 497.725 392.229, 502.072 394.030 C 504.365 394.980, 505.394 395.006, 506.263 394.137 C 509.099 391.301, 500.519 387.732, 494.117 389.086 M 33.374 389.985 C 30.172 391.278, 27 396.376, 27 400.230 C 27 404.431, 29.383 406.773, 37.250 410.307 C 42.961 412.872, 44.101 414.499, 41.800 416.800 C 40.307 418.293, 35.535 418.357, 32.851 416.920 C 31.269 416.074, 30.420 416.215, 28.917 417.575 C 24.300 421.754, 28.258 425, 37.970 425 C 45.076 425, 49.387 422.080, 50.422 416.566 C 51.665 409.941, 50.420 408.064, 42.297 404.311 C 34.681 400.792, 33.486 398.983, 37.225 396.628 C 38.481 395.837, 39.824 395.873, 42.173 396.759 C 45.048 397.844, 45.646 397.742, 47.698 395.814 C 50.693 393, 50.611 391.183, 47.435 389.975 C 44.332 388.796, 36.306 388.801, 33.374 389.985 M 72.887 389.745 C 71.961 389.945, 69.658 393.796, 67.474 398.797 C 65.383 403.584, 62.172 410.826, 60.337 414.891 C 56.108 424.258, 56.118 425, 60.474 425 C 63.386 425, 64.218 424.474, 65.614 421.750 C 67.852 417.383, 68.569 417.033, 75.330 417.015 L 81.161 417 82.732 421 C 84.186 424.702, 84.591 425, 88.152 425 C 90.268 425, 92 424.532, 92 423.959 C 92 422.842, 84.473 404.281, 80.481 395.553 C 78.137 390.428, 76.284 389.011, 72.887 389.745 M 101.727 389.694 C 100.102 390.117, 99.976 391.595, 100.227 407.328 L 100.500 424.500 102.865 424.835 C 106.515 425.351, 107.231 423.810, 107.521 414.824 C 107.668 410.246, 107.856 405.375, 107.938 404 C 108.028 402.487, 109.748 406.041, 112.293 413 C 116.300 423.952, 116.634 424.500, 119.319 424.500 C 121.828 424.500, 122.357 423.895, 124.128 419 C 125.222 415.975, 127.182 410.575, 128.482 407 L 130.847 400.500 131.173 412.500 L 131.500 424.500 135 424.500 L 138.500 424.500 138.773 407.335 L 139.047 390.169 136.023 389.505 C 134.360 389.140, 131.701 389.126, 130.114 389.475 C 127.695 390.006, 126.886 391.047, 125.114 395.907 C 123.951 399.096, 122.981 402.334, 122.958 403.103 C 122.935 403.871, 122.094 406.043, 121.089 407.930 C 119.409 411.085, 119.182 411.205, 118.250 409.430 C 117.693 408.368, 116.902 405.943, 116.493 404.040 C 115.380 398.865, 112.128 391.666, 110.264 390.250 C 108.640 389.017, 105.189 388.792, 101.727 389.694 M 147.250 389.648 C 146.563 389.933, 146 391.455, 146 393.029 C 146 395.733, 146.261 395.907, 150.750 396.195 L 155.500 396.500 155.745 408.500 C 156.055 423.636, 156.362 425, 159.460 425 C 160.792 425, 162.246 424.438, 162.691 423.750 C 163.136 423.063, 163.500 416.650, 163.500 409.500 L 163.500 396.500 168.500 396 C 173.278 395.522, 173.500 395.367, 173.500 392.500 L 173.500 389.500 161 389.314 C 154.125 389.212, 147.938 389.362, 147.250 389.648 M 181.667 390.718 C 180.828 393.778, 180.980 422.432, 181.842 423.784 C 182.448 424.736, 185.618 424.995, 194.080 424.784 L 205.500 424.500 205.811 421.284 C 206.185 417.410, 204.554 416.765, 195.500 417.207 L 189.500 417.500 189.190 414.295 L 188.880 411.090 196.190 410.795 L 203.500 410.500 203.500 407 L 203.500 403.500 196.250 403.206 C 189.015 402.913, 189 402.906, 189 400.063 C 189 396.628, 190.298 396.021, 196.309 396.648 C 202.291 397.271, 205.220 395.732, 204.810 392.183 L 204.500 389.500 193.328 389.218 C 183.321 388.965, 182.104 389.122, 181.667 390.718 M 217.225 389.819 C 216.256 390.450, 216.016 394.712, 216.225 407.574 L 216.500 424.500 226.500 424.500 L 236.500 424.500 236.500 421 L 236.500 417.500 230 417.500 L 223.500 417.500 223 403.500 C 222.534 390.444, 222.365 389.483, 220.500 389.244 C 219.400 389.104, 217.926 389.362, 217.225 389.819 M 273.977 392.250 C 272.881 394.038, 271.120 397.750, 270.063 400.500 C 269.005 403.250, 267.220 407.368, 266.094 409.652 C 262.706 416.526, 260.077 423.743, 260.724 424.391 C 262.302 425.969, 264.214 424.614, 266.212 420.500 L 268.399 416 276.712 416 L 285.026 416 287.212 420.500 C 288.674 423.508, 290.034 425, 291.316 425 C 294.110 425, 294.043 424.776, 284.020 400.527 C 278.782 387.855, 277.381 386.700, 273.977 392.250 M 295.489 390.176 C 295.211 390.904, 295.925 393.975, 297.075 397 C 298.225 400.025, 300.444 405.875, 302.005 410 C 307.046 423.319, 307.927 425, 309.862 425 C 311.847 425, 312.346 424.020, 319.034 407 C 325.651 390.158, 325.400 391, 324.187 389.787 C 322.532 388.132, 320.398 390.359, 318.395 395.829 C 313.029 410.482, 310.781 416, 310.177 415.996 C 309.805 415.994, 308.150 412.352, 306.500 407.902 C 300.428 391.528, 299.491 389.526, 297.743 389.189 C 296.781 389.004, 295.767 389.448, 295.489 390.176 M 332.528 390.176 C 332.272 390.904, 332.160 398.925, 332.281 408 C 332.490 423.760, 332.590 424.500, 334.500 424.500 C 336.424 424.500, 336.500 423.833, 336.500 407.014 C 336.500 391.144, 336.338 389.496, 334.747 389.190 C 333.783 389.004, 332.784 389.448, 332.528 390.176 M 393 407.073 C 393 423.747, 393.136 425.121, 394.750 424.812 C 396.287 424.518, 396.561 422.786, 397 410.574 L 397.500 396.671 403.902 406.086 C 415.723 423.467, 416.994 425, 419.585 425 L 422 425 422 407.559 C 422 396.078, 421.628 389.888, 420.913 389.446 C 418.446 387.921, 417.723 391.241, 417.756 403.939 C 417.775 411.123, 417.460 417, 417.056 417 C 416.652 417, 415.787 415.988, 415.134 414.750 C 414.481 413.512, 411.946 409.800, 409.500 406.500 C 407.055 403.200, 404.181 398.925, 403.114 397 C 400.381 392.069, 397.253 389, 394.961 389 C 393.085 389, 393 389.786, 393 407.073 M 434.688 389.646 C 434.309 390.024, 434 398.166, 434 407.740 C 434 423.779, 434.137 425.120, 435.750 424.810 C 437.337 424.504, 437.500 422.849, 437.500 407.070 C 437.500 390.670, 436.967 387.367, 434.688 389.646 M 360.500 393.711 C 359.400 393.975, 357.042 395.581, 355.260 397.281 C 349.597 402.684, 349.661 411.377, 355.408 417.471 C 358.292 420.529, 359.358 421, 363.400 421 C 370.314 421, 374.623 418.837, 376.458 414.446 C 381.763 401.751, 373.228 390.661, 360.500 393.711 M 275.180 399.758 C 274.454 401.266, 272.998 404.637, 271.945 407.250 L 270.029 412 C 270.029 412, 276.515 412, 276.515 412 C 281.397 412, 283 411.655, 283 410.605 C 283 408.957, 277.728 397.017, 277 397.016 C 276.725 397.016, 275.906 398.250, 275.180 399.758 M 72.616 404.447 C 70.517 409.382, 71.136 411.232, 74.744 410.817 C 77.758 410.470, 77.903 409.144, 75.547 403.500 L 74.295 400.500 72.616 404.447" stroke="none" fill="currentColor" fill-rule="evenodd"/>
+            <path d="M 116.500 41.080 C 70.345 45.779, 38.702 69.013, 27.406 106.500 C 24.998 114.488, 24.692 117.130, 24.682 130 C 24.672 143.013, 24.943 145.328, 27.325 152.578 C 35.498 177.457, 54.732 192.541, 94.087 204.932 C 118.642 212.664, 128.437 216.266, 135.500 220.159 C 144.623 225.189, 148.228 228.417, 151.401 234.399 C 156.125 243.303, 154.303 255.827, 147.191 263.344 C 144.031 266.685, 135.563 271.100, 128.500 273.091 C 120.890 275.236, 100.911 274.957, 94 272.609 C 81.782 268.459, 73.671 263.719, 66 256.244 L 58.500 248.937 56.657 251.219 C 54.536 253.844, 43.232 266.251, 27.767 282.927 C 21.864 289.292, 17.026 295.217, 17.017 296.093 C 17.017 296.093, 17.026 295.217, 17.026 295.217 L 17.026 295.217 C 17.008 296.970, 19.137 299.476, 21.750 301.662 C 39.007 316.104, 61.099 325.917, 83.719 329.187 C 95.871 330.944, 123.127 330.677, 135.741 328.678 C 167.240 323.687, 192.581 307.108, 205.228 283.217 C 215.790 263.267, 218.493 235.668, 211.905 215.050 C 209.359 207.082, 207.727 203.883, 202.949 197.500 C 191.767 182.560, 176.681 173.167, 150.658 164.943 C 118.012 154.626, 112.140 152.592, 105.822 149.410 C 97.528 145.233, 92.398 140.830, 90.322 136.105 C 88.403 131.737, 88.108 120.806, 89.778 115.992 C 94.391 102.697, 119.464 93.210, 139.241 97.276 C 152.182 99.937, 161.499 103.917, 167.270 109.250 C 170.097 111.862, 172.656 114, 172.957 114 C 174.198 114, 214 70.271, 214 68.907 C 214 67.976, 201.809 59.088, 196 55.783 C 183.165 48.482, 166.383 43.585, 147 41.484 C 132.340 39.896, 128.622 39.846, 116.500 41.080 M 380.313 38.250 C 379.870 38.938, 377.305 44.450, 374.612 50.500 C 366.722 68.226, 365.999 64.327, 386.255 113.299 C 411.016 173.165, 423 202.493, 423 203.226 C 423 203.575, 424.375 206.831, 426.056 210.462 C 429.587 218.091, 432 224.653, 432 226.626 C 432 227.777, 421.271 228.002, 365.750 228.015 C 329.313 228.024, 298.909 228.405, 298.187 228.863 C 295.920 230.301, 287.017 251.888, 288.338 252.745 C 288.977 253.160, 322.800 253.501, 363.500 253.502 C 404.200 253.503, 438.928 253.616, 440.674 253.752 C 443.717 253.990, 444.015 254.423, 447.894 264.250 C 450.118 269.887, 453.346 277.875, 455.065 282 C 459.987 293.810, 466.968 310.895, 469.774 318 C 474.400 329.716, 473.112 329, 489.556 329 C 497.435 329, 504.098 328.650, 504.362 328.223 C 504.782 327.544, 496.231 305.753, 491.716 296 C 490.825 294.075, 487.763 286.875, 484.913 280 C 472.778 250.738, 470.859 246.176, 459.143 218.758 C 455.208 209.550, 450.897 199.200, 449.563 195.758 C 448.228 192.316, 445.252 185.225, 442.948 180 C 437.916 168.587, 430.409 150.792, 409.623 101 C 401.013 80.375, 392.655 60.575, 391.051 57 C 389.447 53.425, 386.931 47.462, 385.461 43.750 C 382.776 36.972, 381.805 35.934, 380.313 38.250" stroke="none" fill="var(--red)" fill-rule="evenodd"/>
+          </svg>
+        </div>
+        <span class="eyebrow">Samtel Avionics</span>
+        <h2 class="title-large">Building the Future<br>of Flight.</h2>
+        <p class="desc-large">Streamlining operations with advanced Document Intelligence.</p>
+      </div>
+
+      <!-- Slide 2: The Villain -->
+      <div class="slide" id="slide-2">
+        <span class="eyebrow">The Challenge</span>
+        <h2 class="title-large title-red">The Paper Fortress.</h2>
+        <p class="desc-large" style="margin-bottom: 20px;">Six distinct operational document flows slowing down logistics and finance:</p>
+        <div class="list-wrap">
+          <div class="list-item"><div class="list-dot"></div>Domestic Purchases (Lapp India, Indigrid, LPS Bossard)</div>
+          <div class="list-item"><div class="list-dot"></div>Global Courier Imports & Duties (UPS, Mouser)</div>
+          <div class="list-item"><div class="list-dot"></div>Job Work Invoices & PCBA Manufacturing contracts</div>
+          <div class="list-item"><div class="list-dot"></div>Sales Invoices (Siemens, Delta) & Exports (Saab Grintek)</div>
+          <div class="list-item"><div class="list-dot"></div>Internal Employee Claims & Travel Reimbursements</div>
+        </div>
+      </div>
+
+      <!-- Slide 3: The Cost -->
+      <div class="slide slide-content-center" id="slide-3">
+        <span class="eyebrow">Operational Bottleneck</span>
+        <div class="stat-giant">15 Mins</div>
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 10px;">To manually index a single invoice</h3>
+        <p class="desc-large" style="font-size: 16px;">Wasted checking tax values, sorting line items, typing coordinates, and validating duplicates.</p>
+      </div>
+
+      <!-- Slide 4: The Announcement -->
+      <div class="slide slide-content-center" id="slide-4">
+        <span class="eyebrow">The Breakthrough</span>
+        <h2 class="title-large" style="font-size: 54px;">Today, we reinvent<br>document entry.</h2>
+        <p class="desc-large">Introducing the Samtel Avionics Invoice Processor.</p>
+      </div>
+
+      <!-- Slide 5: The Three Pillars -->
+      <div class="slide" id="slide-5">
+        <span class="eyebrow">The Architecture</span>
+        <h2 class="title-large" style="font-size: 40px; margin-bottom: 10px;">Three Breakthrough Technologies.</h2>
+        <p class="desc-large" style="font-size: 15px;">A single unified pipeline working together.</p>
+        <div class="slide-grid-3">
+          <div class="grid-card">
+            <div class="card-num">1</div>
+            <div class="card-title">Hybrid OCR Reader</div>
+            <div class="card-desc">Native parsing for digital sheets; layout-aware Vision VLM scans for physical papers.</div>
+          </div>
+          <div class="grid-card">
+            <div class="card-num">2</div>
+            <div class="card-title">Intelligent Router</div>
+            <div class="card-desc">Context heuristics and Llama-3 class routing categorize files into 6 structures.</div>
+          </div>
+          <div class="grid-card">
+            <div class="card-num">3</div>
+            <div class="card-title">Extraction Engine</div>
+            <div class="card-desc">Structured layout mapping extracts complex arrays, GST codes, and nested fields.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 6: The Hero Interface -->
+      <div class="slide slide-content-center" id="slide-6">
+        <span class="eyebrow">The Control Center</span>
+        <h3 style="font-size: 28px; font-weight: 700; margin-bottom: 5px;">Designed for Operational Teams</h3>
+        <p class="desc-large" style="font-size: 15px; margin-bottom: 15px;">Real-time side-by-side processing, JSON formatting, and database verification.</p>
+        <div class="ui-preview-mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot"></div><div class="mockup-dot"></div><div class="mockup-dot"></div>
+          </div>
+          <div class="mockup-body">
+            <div class="mock-pane">UPLOAD ZONE</div>
+            <div class="mock-pane">EXTRACTED LEDGER (JSON / TABLE)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 7: Accuracy Benchmark -->
+      <div class="slide slide-content-center" id="slide-7">
+        <span class="eyebrow">Empirical Benchmarking</span>
+        <div class="stat-giant" style="color: var(--success); text-shadow: 0 0 40px rgba(74,222,128,0.25);">98%</div>
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 10px;">Field-Level Extraction Rate</h3>
+        <p class="desc-large" style="font-size: 15px;">Rigorously tested against real-world purchase files, export invoices, and job-work contracts.</p>
+      </div>
+
+      <!-- Slide 8: One More Thing -->
+      <div class="slide slide-content-center" id="slide-8" style="background: #000;">
+        <h2 class="title-large" style="font-size: 72px; letter-spacing: -2px; font-weight: 800; background: linear-gradient(180deg, #ffffff 0%, #cccccc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">One more thing...</h2>
+      </div>
+
+      <!-- Slide 9: Styled Reporting -->
+      <div class="slide" id="slide-9">
+        <span class="eyebrow">Elegant Deliverables</span>
+        <h2 class="title-large" style="font-size: 40px; margin-bottom: 15px;">Reports That Command Respect.</h2>
+        <p class="desc-large" style="font-size: 15px; margin-bottom: 25px;">Automated Excel generation styled with Samtel corporate colors and custom column layouts.</p>
+        <div style="display: flex; gap: 20px; align-items: center; justify-content: center; width: 100%;">
+          <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px 25px; width: 300px; text-align: center;">
+            <div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Standard Exports</div>
+            <div style="font-size: 20px; font-weight: 600; margin-top: 5px; color: var(--text-sub);">Ugly, Broken CSVs</div>
+          </div>
+          <div style="font-size: 24px; color: var(--red); font-weight: 700;">➔</div>
+          <div style="background: var(--red-glow); border: 1px solid var(--red); border-radius: 8px; padding: 15px 25px; width: 300px; text-align: center;">
+            <div style="color: var(--red); font-size: 12px; text-transform: uppercase; font-weight: 600;">Samtel Custom Engine</div>
+            <div style="font-size: 20px; font-weight: 600; margin-top: 5px; color: var(--text);">Beautiful styled Excel sheets</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 10: Before vs After -->
+      <div class="slide" id="slide-10">
+        <span class="eyebrow">The Summary</span>
+        <h2 class="title-large" style="font-size: 40px; margin-bottom: 30px;">The ROI.</h2>
+        <div class="compare-wrap">
+          <div class="compare-box">
+            <div class="compare-title">Manual Processing</div>
+            <div class="compare-val" style="color: var(--error) !important;">15 Mins</div>
+            <div class="compare-desc">Data entry errors, double-billing risks, manual categorizations.</div>
+          </div>
+          <div class="compare-box highlight">
+            <div class="compare-title">Invoice Processor</div>
+            <div class="compare-val">15 Secs</div>
+            <div class="compare-desc">Auto-structured JSON, duplicate alarms, styled Excel logging.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom HUD / Controls -->
+  <div class="hud-bar">
+    <div class="slide-indicator">
+      Slide <span id="current-slide-num">1</span> of <span id="total-slides-num">10</span>
+    </div>
+    <div class="nav-btn-group">
+      <button class="nav-btn" onclick="prevSlide()">Prev</button>
+      <button class="nav-btn primary" onclick="nextSlide()">Next</button>
+    </div>
+    <div class="notes-toggle-wrap">
+      <button class="nav-btn" id="theme-toggle-btn" onclick="toggleTheme()">Dark Mode</button>
+      <button class="nav-btn" onclick="toggleNotes()">Speaker Notes (S)</button>
+    </div>
+  </div>
+
+  <!-- Presenter Drawer -->
+  <div class="notes-drawer" id="notes-drawer">
+    <div class="notes-header">
+      <div class="notes-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-top:-2px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Presenter Script
+      </div>
+      <button class="modal-close" onclick="toggleNotes()">&times;</button>
+    </div>
+    <div class="action-tip" id="note-action-tip">Ready to present.</div>
+    <div class="notes-body" id="note-content">Loading...</div>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const currentNum = document.getElementById('current-slide-num');
+    const totalNum = document.getElementById('total-slides-num');
+    const noteContent = document.getElementById('note-content');
+    const noteTip = document.getElementById('note-action-tip');
+    const notesDrawer = document.getElementById('notes-drawer');
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    
+    let currentIdx = 0;
+    totalNum.innerText = slides.length;
+
+    // Steve Jobs Speaking Scripts per Slide
+    const scripts = [
+      // Slide 1
+      {
+        tip: "Stand central, speak with pride. Set a tone of precision.",
+        text: "<p><strong>'Every day, Samtel Avionics builds displays that guide pilots through the most demanding skies. You design for precision. You design for reliability.'</strong></p>" +
+              "<p>'But behind the scenes, there is an administrative bottleneck. A system of paper invoices, manual entries, and compliance challenges that is holding your operational flow back. Today, we're changing that. Let's see how.'</p>"
+      },
+      // Slide 2
+      {
+        tip: "Point to the lists on screen. Emphasize complexity.",
+        text: "<p><strong>'This is the Villain: The Paper Fortress.'</strong></p>" +
+              "<p>'Every month, your finance teams handle diverse document layouts. Some are domestic material purchases. Some are complex import invoices with custom duties. Others are job work or employee claims. Sorting, verifying, and routing these manually is a logistical nightmare.'</p>"
+      },
+      // Slide 3
+      {
+        tip: "Look at the number '15 Mins'. Let the silence settle.",
+        text: "<p><strong>'Fifteen minutes.'</strong></p>" +
+              "<p>'That is how long it takes an accounts manager to index just one single invoice, check for duplicate bill numbers, split CGST/SGST/IGST, and key it into Tally or SAP.'</p>" +
+              "<p>'Multiply this by thousands of monthly bills. That is an enormous amount of human capital locked in spreadsheet entry. We thought: there has to be a better way.'</p>"
+      },
+      // Slide 4
+      {
+        tip: "Deep breath. Deliver this with intense focus.",
+        text: "<p><strong>'Today, we are reinventing document entry.'</strong></p>" +
+              "<p>'We have built a system that turns unstructured invoice paperwork into clean database records in a click. Let me introduce the Samtel Avionics Invoice Processor.'</p>"
+      },
+      // Slide 5
+      {
+        tip: "Walk through the three components. Emphasize integration.",
+        text: "<p><strong>'We did it by combining three breakthrough technologies.'</strong></p>" +
+              "<p>'1. A hybrid OCR pipeline that parses digital PDFs natively but drops back to Vision LLMs for scans.'</p>" +
+              "<p>'2. An intelligent router that knows your suppliers and automatically matches the invoice layout.'</p>" +
+              "<p>'3. A structured extraction engine that translates layout coordinates into verified database fields.'</p>" +
+              "<p>'They work as a single, unified pipeline. Let's look at the result.'</p>"
+      },
+      // Slide 6
+      {
+        tip: "Open the dashboard. Point out the layout.",
+        text: "<p><strong>'This is the control panel we designed for you.'</strong></p>" +
+              "<p>'We built a modern, dark-mode command center. To the left: drag and drop files. To the right: immediate structured table validation and JSON compilation. Let's do a live run of the dashboard now.'</p>" +
+              "<p><em>[Switch to the Live Dashboard Tab in your browser. Upload 'AGGRESSIVE JOB WORK.pdf'. Highlight the automatic 'SERVICES' type routing and layout extraction. Upload again to demonstrate the duplicate warning banner!]</em></p>"
+      },
+      // Slide 7
+      {
+        tip: "Reveal the number with absolute confidence.",
+        text: "<p><strong>'How accurate is it?'</strong></p>" +
+              "<p>'We didn't just write code; we validated it. Running tests against your actual vendor invoices—Lapp India, Mouser, GEM, Saab export forms—the pipeline achieves a 98% extraction rate. Even on physical scans, the Visual VLM reads exact HSN codes, totals, and bank data points.'</p>"
+      },
+      // Slide 8
+      {
+        tip: "Smile. Lower your voice slightly. Deliver the hook.",
+        text: "<p><strong>'But we didn't stop there. There is one more thing...'</strong></p>"
+      },
+      // Slide 9
+      {
+        tip: "Highlight the contrast of standard vs Samtel styling.",
+        text: "<p><strong>'We thought about how managers consume this data.'</strong></p>" +
+              "<p>'Most systems export raw, ugly CSV spreadsheets. They are painful to read. So we built a custom formatting engine. It parses the data and wraps it in a styled Excel workbook styled with Samtel's branding colors, bold category headings, and auto-adjusted table columns. It looks like it was handmade by a designer in a millisecond.'</p>"
+      },
+      // Slide 10
+      {
+        tip: "Deliver the final contrast and close with power.",
+        text: "<p><strong>'Let's look at the final numbers.'</strong></p>" +
+              "<p>'Fifteen minutes of slow, manual risk-prone entry vs fifteen seconds of automated, secure database ingestion. This isn't just about saving time; it's about accuracy, data health, and giving your operations team the precision tools they deserve.'</p>" +
+              "<p>'Thank you.'</p>"
+      }
+    ];
+
+    function updateSlide() {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === currentIdx);
+      });
+      currentNum.innerText = currentIdx + 1;
+      
+      // Control watermark visibility (hide on slide 1 and slide 8)
+      if (currentIdx === 0 || currentIdx === 7) {
+        document.body.classList.add('watermark-hidden');
+      } else {
+        document.body.classList.remove('watermark-hidden');
+      }
+
+      // Update Speaker Notes
+      const currentScript = scripts[currentIdx];
+      noteTip.innerHTML = `<strong>TIP:</strong> ${currentScript.tip}`;
+      noteContent.innerHTML = currentScript.text;
+    }
+
+    function nextSlide() {
+      if (currentIdx < slides.length - 1) {
+        currentIdx++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentIdx > 0) {
+        currentIdx--;
+        updateSlide();
+      }
+    }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+
+    function toggleTheme() {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.body.setAttribute('data-theme', 'light');
+        themeBtn.innerText = 'Dark Mode';
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        themeBtn.innerText = 'Light Mode';
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.code === 'KeyS') {
+        e.preventDefault();
+        toggleNotes();
+      }
+    });
+
+    // Init first slide notes
+    updateSlide();
+  </script>
+</body>
+</html>

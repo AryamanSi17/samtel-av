@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -53,6 +53,22 @@
       background: var(--surface);
       position: sticky; top: 0; z-index: 100;
     }
+    .header-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 38px;
+      width: auto;
+      flex-shrink: 0;
+    }
+    .header-logo-wrap img {
+      height: 100%;
+      width: auto;
+    }
+    [data-theme="light"] .logo-dark { display: none !important; }
+    [data-theme="light"] .logo-light { display: block !important; }
+    [data-theme="dark"] .logo-dark { display: block !important; }
+    [data-theme="dark"] .logo-light { display: none !important; }
     .header-title { flex: 1; }
     .header-title h1 { font-size: 18px; font-weight: 700; color: var(--red); letter-spacing: .2px; }
     .header-title p  { font-size: 12px; color: var(--text-muted); font-weight: 300; margin-top: 2px; }
@@ -163,6 +179,7 @@
     .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
     .btn-ghost svg   { width: 12px; height: 12px; }
     .btn-ghost.success { color: var(--success); border-color: var(--success); background: var(--success-bg); }
+    .btn-ghost.active  { color: var(--red); border-color: var(--red); background: var(--red-dim); }
 
     .btn-danger {
       background: none; border: 1px solid var(--border);
@@ -497,11 +514,164 @@
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2.2s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
     @media (max-width: 920px) { footer { padding: 12px 16px; flex-direction: column; gap: 4px; text-align: center; } }
+
+    /* Popover & Overlay styles */
+    .types-popover {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      z-index: 1001;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .types-popover.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .popover-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--red);
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+    .popover-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-sub);
+      padding: 6px 0;
+    }
+    .popover-item-val {
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+    .blur-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+      transition: opacity 0.25s ease;
+    }
+    .blur-overlay.active {
+      opacity: 1;
+    }
+
+    /* Excel Viewer */
+    .excel-viewer {
+      margin-top: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface2);
+      display: flex;
+      flex-direction: column;
+      height: 400px;
+      overflow: hidden;
+    }
+    .excel-grid-container {
+      flex: 1;
+      overflow: auto;
+      background: var(--surface);
+      position: relative;
+    }
+    .excel-table {
+      border-collapse: collapse;
+      font-size: 11px;
+      font-family: 'Poppins', sans-serif;
+      color: var(--text-sub);
+      width: 100%;
+      min-width: 600px;
+    }
+    .excel-table th, .excel-table td {
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      text-align: left;
+    }
+    .excel-table th {
+      background: var(--surface2);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 6px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .excel-table td.row-num {
+      background: var(--surface2);
+      color: var(--text-muted);
+      text-align: center;
+      width: 40px;
+      font-weight: 600;
+      font-size: 10px;
+    }
+    .excel-sheets-bar {
+      height: 36px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 4px;
+      overflow-x: auto;
+    }
+    .excel-sheet-tab {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      cursor: pointer;
+      background: transparent;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .excel-sheet-tab:hover {
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+    }
+    .excel-sheet-tab.active {
+      background: var(--surface);
+      color: var(--red);
+      border-color: var(--border);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 
 <header>
+  <div class="header-logo-wrap">
+    <img src="/static/Samtel_Avionics_light.svg" class="samtel-logo logo-light" alt="Samtel Logo">
+    <img src="/static/Samtel_Avionics_dark.svg" class="samtel-logo logo-dark" alt="Samtel Logo">
+  </div>
   <div class="header-title">
     <h1>Samtel Avionics</h1>
     <p>Invoice Processing Software</p>
@@ -509,7 +679,7 @@
   <div class="header-right">
     <button id="theme-btn" onclick="toggleTheme()">
       <span id="theme-icon"></span>
-      <span id="theme-label">Light</span>
+      <span id="theme-label">Dark</span>
     </button>
   </div>
 </header>
@@ -708,7 +878,15 @@
         <div id="batch-empty" style="text-align:center;padding:48px 0;color:var(--text-muted);font-size:13px">
           No files queued yet
         </div>
-        <div id="queue-list" class="queue-list" style="display:none"></div>
+        <div id="queue-list" class="queue-list" style="display:none; margin-bottom: 20px;"></div>
+
+        <!-- Integrated Excel Viewer -->
+        <div class="excel-viewer" id="batch-excel-viewer" style="display: none;">
+          <div class="excel-grid-container">
+            <table class="excel-table" id="excel-viewer-table"></table>
+          </div>
+          <div class="excel-sheets-bar" id="excel-sheets-bar"></div>
+        </div>
       </div>
 
     </div>
@@ -733,6 +911,10 @@
           <option value="SERVICES">Services</option>
           <option value="EMPLOYEE_REIMBURSEMENT">Reimbursement</option>
         </select>
+        <button class="btn-ghost" id="hist-dup-btn" onclick="toggleDupFilter()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Duplicates Only
+        </button>
         <a href="/api/export/excel" class="btn-ghost" style="text-decoration:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export Excel
@@ -770,14 +952,18 @@
         <div class="stat-value" id="stat-total">—</div>
         <div class="stat-sub">Processed so far</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" id="card-types" onmouseenter="showTypesPopover()" onmouseleave="hideTypesPopover()" style="overflow: visible;">
         <div class="stat-label">Invoice Types</div>
         <div class="stat-value" id="stat-types">—</div>
         <div class="stat-sub">Distinct categories</div>
+        <div class="types-popover" id="types-popover">
+          <div class="popover-title">Invoice Categories</div>
+          <div class="popover-list" id="popover-list-body"></div>
+        </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="showDuplicatesInHistory()" style="cursor: pointer;">
         <div class="stat-label">Duplicates Found</div>
-        <div class="stat-value" id="stat-dups">—</div>
+        <div class="stat-value" id="stat-dups" style="color: var(--red);">—</div>
         <div class="stat-sub">Flagged for review</div>
       </div>
     </div>
@@ -837,7 +1023,7 @@
 // ── Shared ──────────────────────────────────────────────────────────────────
 const sunSVG  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
 const moonSVG = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-document.getElementById('theme-icon').innerHTML = sunSVG;
+document.getElementById('theme-icon').innerHTML = moonSVG;
 
 function toggleTheme() {
   const html = document.documentElement;
@@ -1139,10 +1325,14 @@ function replaceQueueItem(i, st) {
   old.replaceWith(tmp.firstElementChild);
 }
 
+let _batchProcessedData = [];
+
 batchBtn.addEventListener('click', async () => {
   if (!_batchFiles.length) return;
   batchBtn.disabled = true;
   _batchStartTimes = new Array(_batchFiles.length).fill(null);
+  _batchProcessedData = new Array(_batchFiles.length).fill(null);
+  document.getElementById('batch-excel-viewer').style.display = 'none';
   const statuses = _batchFiles.map(() => 'pending');
   renderQueue(statuses);
 
@@ -1189,6 +1379,9 @@ batchBtn.addEventListener('click', async () => {
         const res     = await fetch('/api/process-invoice', { method:'POST', body:form });
         const elapsed = ((Date.now() - _batchStartTimes[i]) / 1000).toFixed(1);
         const json    = await res.json();
+        if (res.ok) {
+          _batchProcessedData[i] = json;
+        }
         statuses[i] = res.ok
           ? { type: json.invoice_type, id: json.id, dup: !!json.duplicate_warning, elapsed, ocr_method: json.ocr_method }
           : { error: json.detail || 'Failed', elapsed };
@@ -1207,19 +1400,278 @@ batchBtn.addEventListener('click', async () => {
   batchSt.className = 'status-msg success';
   batchBtn.disabled = false;
   document.getElementById('batch-progress').textContent = `${total}/${total} done`;
+  renderExcelViewer();
 });
+
+function renderExcelViewer() {
+  const container = document.getElementById('batch-excel-viewer');
+  if (!container) return;
+  
+  const validData = _batchProcessedData.filter(d => d !== null && d.status === 'success');
+  if (validData.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'flex';
+  
+  const tabsBar = document.getElementById('excel-sheets-bar');
+  let tabsHTML = `<button class="excel-sheet-tab active" onclick="switchExcelSheet(-1)">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;margin-top:-1px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Summary
+  </button>`;
+  
+  validData.forEach((d, idx) => {
+    const shortName = d.filename.length > 15 ? d.filename.slice(0, 12) + '...' : d.filename;
+    tabsHTML += `<button class="excel-sheet-tab" id="sheet-tab-${idx}" onclick="switchExcelSheet(${idx})">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;margin-top:-1px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      ${escHtml(shortName)}
+    </button>`;
+  });
+  tabsBar.innerHTML = tabsHTML;
+  
+  switchExcelSheet(-1);
+}
+
+function switchExcelSheet(sheetIdx) {
+  const tabs = document.querySelectorAll('.excel-sheet-tab');
+  tabs.forEach((tab, index) => {
+    if (sheetIdx === -1 && index === 0) {
+      tab.classList.add('active');
+    } else if (index === sheetIdx + 1) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+  
+  const table = document.getElementById('excel-viewer-table');
+  if (!table) return;
+  
+  const validData = _batchProcessedData.filter(d => d !== null && d.status === 'success');
+  
+  if (sheetIdx === -1) {
+    let html = `<thead>
+      <tr>
+        <th></th>
+        <th>A</th>
+        <th>B</th>
+        <th>C</th>
+        <th>D</th>
+        <th>E</th>
+        <th>F</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th>File Name</th>
+        <th>Type</th>
+        <th>Invoice Number</th>
+        <th>Invoice Date</th>
+        <th>Vendor / Party</th>
+        <th>Total Amount</th>
+      </tr>
+    </thead>
+    <tbody>`;
+    
+    validData.forEach((d, idx) => {
+      const typeLabel = TYPE_LABELS[d.invoice_type] || d.invoice_type;
+      const data = d.invoice_data || {};
+      const total = data.grand_total || data.total_amount || data.total_inr || data.net_payable_to_employee || '—';
+      const invNum = data.invoice_number || '—';
+      const invDate = data.invoice_date || '—';
+      const vendor = data.vendor_name || data.party_name || data.seller_name || '—';
+      
+      html += `<tr>
+        <td class="row-num">${idx + 1}</td>
+        <td style="font-weight: 500;">${escHtml(d.filename)}</td>
+        <td><span class="hist-type">${escHtml(typeLabel)}</span></td>
+        <td>${escHtml(invNum)}</td>
+        <td>${escHtml(invDate)}</td>
+        <td>${escHtml(vendor)}</td>
+        <td style="font-weight: 600; color: var(--red);">${escHtml(total)}</td>
+      </tr>`;
+    });
+    
+    html += `</tbody>`;
+    table.innerHTML = html;
+  } else {
+    const invoice = validData[sheetIdx];
+    const data = invoice.invoice_data || {};
+    
+    let html = `<thead>
+      <tr>
+        <th></th>
+        <th>A</th>
+        <th>B</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th>Field Name (Key)</th>
+        <th>Extracted Value</th>
+      </tr>
+    </thead>
+    <tbody>`;
+    
+    html += `<tr>
+      <td class="row-num">1</td>
+      <td style="color:var(--text-muted); font-weight:600;">System ID</td>
+      <td style="color:var(--text-muted);">${invoice.id}</td>
+    </tr>
+    <tr>
+      <td class="row-num">2</td>
+      <td style="color:var(--text-muted); font-weight:600;">Filename</td>
+      <td style="color:var(--text-muted);">${escHtml(invoice.filename)}</td>
+    </tr>
+    <tr>
+      <td class="row-num">3</td>
+      <td style="color:var(--text-muted); font-weight:600;">Invoice Type</td>
+      <td><span class="hist-type">${escHtml(TYPE_LABELS[invoice.invoice_type] || invoice.invoice_type)}</span></td>
+    </tr>
+    <tr>
+      <td class="row-num">4</td>
+      <td style="color:var(--text-muted); font-weight:600;">OCR Method</td>
+      <td style="font-size:10px; color:var(--text-muted);">${escHtml(invoice.ocr_method)}</td>
+    </tr>`;
+    
+    let rowIdx = 5;
+    for (const [key, value] of Object.entries(data)) {
+      if (value === null || value === undefined) continue;
+      if (key === 'line_items' && Array.isArray(value)) continue;
+      
+      let valStr = '';
+      if (typeof value === 'object') {
+        valStr = JSON.stringify(value);
+      } else {
+        valStr = String(value);
+      }
+      
+      html += `<tr>
+        <td class="row-num">${rowIdx++}</td>
+        <td style="font-weight: 500;">${escHtml(key.replace(/_/g, ' ').toUpperCase())}</td>
+        <td style="color: var(--text);">${escHtml(valStr)}</td>
+      </tr>`;
+    }
+    
+    if (data.line_items && Array.isArray(data.line_items) && data.line_items.length > 0) {
+      html += `<tr>
+        <td class="row-num">${rowIdx++}</td>
+        <td style="font-weight: 600; color: var(--red); background: var(--surface2);" colspan="2">LINE ITEMS (${data.line_items.length} items found)</td>
+      </tr>`;
+      
+      data.line_items.forEach((item, itemIdx) => {
+        html += `<tr>
+          <td class="row-num">${rowIdx++}</td>
+          <td style="font-weight: 500; padding-left: 20px;">Item #${itemIdx + 1} Description</td>
+          <td>${escHtml(item.description || item.material_code || '—')}</td>
+        </tr>
+        <tr>
+          <td class="row-num">${rowIdx++}</td>
+          <td style="font-weight: 500; padding-left: 20px; color: var(--text-muted);">Details</td>
+          <td>Qty: ${item.quantity || '—'} | Rate: ${item.rate || '—'} | Amount: ${item.amount || item.total || '—'}</td>
+        </tr>`;
+      });
+    }
+    
+    html += `</tbody>`;
+    table.innerHTML = html;
+  }
+}
 
 // ── HISTORY TAB ───────────────────────────────────────────────────────────
 
 let _historyData = [];
+let _showDuplicatesOnly = false;
 
 async function loadHistory() {
   try {
     const res = await fetch('/api/history');
     _historyData = await res.json();
-    renderHistory(_historyData);
+    filterHistory();
   } catch(e) {
     document.getElementById('history-body').innerHTML = `<tr class="empty-row"><td colspan="9">Failed to load history</td></tr>`;
+  }
+}
+
+function toggleDupFilter() {
+  _showDuplicatesOnly = !_showDuplicatesOnly;
+  const btn = document.getElementById('hist-dup-btn');
+  if (btn) {
+    if (_showDuplicatesOnly) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  }
+  filterHistory();
+}
+
+function showDuplicatesInHistory() {
+  switchTab('history');
+  _showDuplicatesOnly = true;
+  const btn = document.getElementById('hist-dup-btn');
+  if (btn) btn.classList.add('active');
+  filterHistory();
+}
+
+let _analyticsData = null;
+
+async function populatePopoverData() {
+  const listBody = document.getElementById('popover-list-body');
+  if (!listBody) return;
+  
+  if (!_analyticsData) {
+    try {
+      const res  = await fetch('/api/analytics');
+      _analyticsData = await res.json();
+    } catch(e) {
+      listBody.innerHTML = '<div class="popover-item" style="color:var(--text-muted)">Failed to load data</div>';
+      return;
+    }
+  }
+  
+  if (!_analyticsData || !_analyticsData.by_type || _analyticsData.by_type.length === 0) {
+    listBody.innerHTML = '<div class="popover-item" style="color:var(--text-muted)">No types processed yet</div>';
+    return;
+  }
+  
+  listBody.innerHTML = _analyticsData.by_type.map(d => {
+    const label = TYPE_LABELS[d.type] || d.type;
+    return `
+      <div class="popover-item">
+        <span>${escHtml(label)}</span>
+        <span class="popover-item-val">${d.count}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function showTypesPopover() {
+  const overlay = document.getElementById('blur-overlay');
+  const popover = document.getElementById('types-popover');
+  const card = document.getElementById('card-types');
+  
+  if (overlay && popover && card) {
+    populatePopoverData();
+    overlay.classList.add('active');
+    card.style.zIndex = '1000';
+    card.style.position = 'relative';
+    popover.classList.add('active');
+  }
+}
+
+function hideTypesPopover() {
+  const overlay = document.getElementById('blur-overlay');
+  const popover = document.getElementById('types-popover');
+  const card = document.getElementById('card-types');
+  
+  if (overlay && popover && card) {
+    overlay.classList.remove('active');
+    popover.classList.remove('active');
+    setTimeout(() => {
+      if (!popover.classList.contains('active')) {
+        card.style.zIndex = '';
+      }
+    }, 250);
   }
 }
 
@@ -1229,7 +1681,8 @@ function filterHistory() {
   const filtered = _historyData.filter(r => {
     const matchType  = !type || r.invoice_type === type;
     const matchQuery = !q || [r.filename,r.invoice_number,r.party_name,r.invoice_date].some(f => (f||'').toLowerCase().includes(q));
-    return matchType && matchQuery;
+    const matchDups  = !_showDuplicatesOnly || r.duplicate_of !== null;
+    return matchType && matchQuery && matchDups;
   });
   renderHistory(filtered);
 }
@@ -1339,6 +1792,7 @@ async function loadAnalytics() {
   try {
     const res  = await fetch('/api/analytics');
     const data = await res.json();
+    _analyticsData = data;
 
     document.getElementById('stat-total').textContent = data.total_count;
     document.getElementById('stat-types').textContent = data.by_type.length;
@@ -1423,5 +1877,6 @@ async function loadAnalytics() {
 
 
 </script>
+<div class="blur-overlay" id="blur-overlay"></div>
 </body>
 </html>
