@@ -729,6 +729,14 @@
         <div class="drop-title">Drop your invoice here</div>
       </div>
 
+      <button class="btn-ghost" id="camera-btn" style="margin-top:12px; width:100%; border-radius:var(--radius-sm); padding:10px 14px; font-size:12px; justify-content:center; gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Scan with Camera
+      </button>
+
       <div class="file-info" id="file-info" title="Click to view/preview PDF">
         <div class="file-icon-sm">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
@@ -985,6 +993,31 @@
   </div>
 </div>
 
+<!-- Camera Modal -->
+<div class="modal-overlay" id="camera-modal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <span class="modal-title">Scan Invoice with Camera</span>
+      <button class="modal-close" onclick="closeCameraModal()">×</button>
+    </div>
+    <div class="modal-body" style="display: flex; flex-direction: column; align-items: center; gap: 16px; position: relative;">
+      <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: var(--radius-sm); overflow: hidden; position: relative; border: 1px solid var(--border);">
+        <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <div id="camera-flash" style="position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.1s ease; z-index: 10;"></div>
+      </div>
+      <div style="display: flex; gap: 12px; width: 100%;">
+        <button class="btn-primary" id="capture-btn" style="flex: 1; justify-content: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          Capture Photo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Invoice detail modal -->
 <div class="modal-overlay" id="inv-modal">
   <div class="modal">
@@ -1120,6 +1153,58 @@ fileInfo.addEventListener('click', () => {
 });
 
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+// ── Camera Scanner Logic ──
+let _cameraStream = null;
+
+async function openCameraModal() {
+  const modal = document.getElementById('camera-modal');
+  const video = document.getElementById('camera-preview');
+  modal.classList.add('open');
+  try {
+    _cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    video.srcObject = _cameraStream;
+  } catch (err) {
+    alert("Could not access camera: " + err.message);
+    closeCameraModal();
+  }
+}
+
+function closeCameraModal() {
+  const modal = document.getElementById('camera-modal');
+  modal.classList.remove('open');
+  if (_cameraStream) {
+    _cameraStream.getTracks().forEach(track => track.stop());
+    _cameraStream = null;
+  }
+}
+
+document.getElementById('camera-btn').addEventListener('click', openCameraModal);
+
+document.getElementById('capture-btn').addEventListener('click', () => {
+  const video = document.getElementById('camera-preview');
+  const flash = document.getElementById('camera-flash');
+  
+  // Flash effect
+  flash.style.opacity = '1';
+  setTimeout(() => { flash.style.opacity = '0'; }, 100);
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  canvas.toBlob((blob) => {
+    if (blob) {
+      const file = new File([blob], `camera_capture_${Date.now()}.png`, { type: 'image/png' });
+      setFile(file);
+      closeCameraModal();
+    }
+  }, 'image/png');
+});
 
 dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
